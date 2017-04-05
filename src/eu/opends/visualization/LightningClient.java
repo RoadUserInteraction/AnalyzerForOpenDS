@@ -21,9 +21,8 @@ package eu.opends.visualization;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
-import java.net.Socket;
-import java.util.Calendar;
-import java.util.GregorianCalendar;
+import java.net.*;
+import java.util.*;
 
 import com.jme3.math.Vector3f;
 import com.jme3.renderer.Camera;

@@ -18,6 +18,7 @@
 
 package eu.opends.car;
 
+import com.jme3.bullet.control.VehicleControl;
 import com.jme3.math.FastMath;
 
 import eu.opends.drivingTask.scenario.ScenarioLoader;
@@ -185,10 +186,11 @@ public class Transmission
 	}
 
 
-	public void performAcceleration(float pAccel) 
+	public void performAcceleration(float pAccel, float brakingForce, float frictionForce, float handBrakeForce) 
 	{
 		float currentEngineSpeed = getRPM();
 		float currentVehicleSpeed = FastMath.abs(car.getCarControl().getCurrentVehicleSpeedKmHour());
+		float travelDirection = FastMath.sign(car.getCarControl().getCurrentVehicleSpeedKmHour());
 		float speedPercentage = currentVehicleSpeed/speedAt100PercentMarker;
 		
 		int gear = getGear();		
@@ -209,7 +211,25 @@ public class Transmission
 			powerPercentage = powerPercentage * (limitedSpeed - currentVehicleSpeed);
 		
 		// accelerate
-		car.getCarControl().accelerate(pAccel * powerPercentage * Math.signum(gear));
+		// if two front wheel driven, then accelerate only these ones		
+		if (FastMath.abs(currentVehicleSpeed)<1 & FastMath.abs(pAccel * powerPercentage * Math.signum(gear))<=brakingForce+frictionForce){
+			car.getCarControl().accelerate(0);
+			car.getCarControl().brake(car.getCarControl().getMass()*currentVehicleSpeed/(3.6f*4));
+		}
+		else {
+			car.getCarControl().accelerate(0,pAccel * powerPercentage * Math.signum(gear)*2-travelDirection*(brakingForce+frictionForce)); // multiplied by 2, because nbWheels/DrivenWheel = 4/2 = 2
+			car.getCarControl().accelerate(1,pAccel * powerPercentage * Math.signum(gear)*2-travelDirection*(brakingForce+frictionForce)); // frictionForce on the driven wheel (this friction corresponds to the engine brake)
+			car.getCarControl().accelerate(2,-travelDirection*((handBrakeForce==0)?brakingForce:handBrakeForce)); // hand brake on the rear wheels
+			car.getCarControl().accelerate(3,-travelDirection*((handBrakeForce==0)?brakingForce:handBrakeForce));
+		}
+		
+
+
+		// if rear propelled
+//		car.getCarControl().accelerate(2,pAccel * powerPercentage * Math.signum(gear)*2); // multiplied by 2, because nbWheels/DrivenWheel = 4/2 = 2
+//		car.getCarControl().accelerate(3,pAccel * powerPercentage * Math.signum(gear)*2);
+		// otherwise (4 wheel driven), if 50/50 balanced
+//		car.getCarControl().accelerate(pAccel * powerPercentage * Math.signum(gear));
 		
 		// output texts
 		PanelCenter.setGearIndicator(gear, isAutomaticTransmission);

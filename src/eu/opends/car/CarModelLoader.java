@@ -39,7 +39,7 @@ import com.jme3.scene.Spatial;
 import com.jme3.scene.Spatial.CullHint;
 import com.jme3.scene.shape.Box;
 
-import eu.opends.main.Simulator;
+import eu.opends.basics.SimulationBasics;
 import eu.opends.tools.Util;
 
 /**
@@ -106,7 +106,7 @@ public class CarModelLoader
 	}
 
 	
-	public CarModelLoader(Simulator sim, Car car, String modelPath, float mass)
+	public CarModelLoader(SimulationBasics sim, Car car, String modelPath, float mass)
 	{	
         carNode = (Node)sim.getAssetManager().loadModel(modelPath);
         
@@ -397,7 +397,7 @@ public class CarModelLoader
 	}
 
 	
-	private void setupHeadLight(Simulator sim, Properties properties) 
+	private void setupHeadLight(SimulationBasics sim, Properties properties) 
 	{
 		// add node representing position of left head light
 		Box leftLightBox = new Box(0.01f, 0.01f, 0.01f);

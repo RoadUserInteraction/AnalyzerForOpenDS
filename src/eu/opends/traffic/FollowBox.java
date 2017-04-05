@@ -27,22 +27,22 @@ import com.jme3.material.Material;
 import com.jme3.math.ColorRGBA;
 import com.jme3.math.FastMath;
 import com.jme3.math.Quaternion;
-import com.jme3.math.Spline.SplineType;
 import com.jme3.math.Vector3f;
+import com.jme3.math.Spline.SplineType;
 import com.jme3.scene.Geometry;
 import com.jme3.scene.Spatial;
 import com.jme3.scene.Spatial.CullHint;
 import com.jme3.scene.shape.Box;
 
-import eu.opends.main.Simulator;
+import eu.opends.basics.SimulationBasics;
 
 /**
  * 
  * @author Rafael Math
  */
-public class FollowBox 
+public class FollowBox
 {
-	private Simulator sim;
+	private SimulationBasics sim;
 	private TrafficObject trafficObject;
 	private FollowBoxSettings settings;
 	private List<Waypoint> waypointList;
@@ -58,9 +58,9 @@ public class FollowBox
 	private boolean waitForNextUpdate = true;
 
 	
-	public FollowBox(Simulator sim, final TrafficObject trafficObject, FollowBoxSettings settings)
+	public FollowBox(SimulationBasics sim2, final TrafficObject trafficObject, FollowBoxSettings settings)
 	{
-		this.sim = sim;
+		this.sim = sim2;
 		this.trafficObject = trafficObject;
 		this.settings = settings;
 		
@@ -79,7 +79,7 @@ public class FollowBox
 	    motionPath.setCurveTension(settings.getCurveTension());
 	    
 	    if(settings.isPathVisible())
-	    	motionPath.enableDebugShape(sim.getAssetManager(), sim.getSceneNode());
+	    	motionPath.enableDebugShape(sim2.getAssetManager(), sim2.getSceneNode());
 
 /*
 		// does not trigger every way point reliably !!!!!
@@ -108,7 +108,7 @@ public class FollowBox
         });
 */
 	    
-	    followBox = createFollowBox() ;
+	    followBox = createFollowBox();
 	    motionControl = new MotionEvent(followBox,motionPath);
 	    
 	    // get start way point
@@ -182,6 +182,58 @@ public class FollowBox
 		
 		checkIfWayPointReached();
 	}
+	
+	// MOD: Extra function for DriveAnalyzer
+	public void update(Vector3f trafficObjectPos, Vector3f followBoxPos)
+	{
+		// pause movement of follower box if traffic object's distance
+		// has exceeded maximum
+		/*
+		if(maxDistanceExceeded(trafficObjectPos) || sim.isPause())
+			//motionControl.setSpeed(0f);
+			motionControl.pause();
+		else
+			//motionControl.setSpeed(0.01f);
+			motionControl.play();
+		*/
+		
+		// skip "else"-part during initialization (first 3 update loops)
+		if(sim.isPause() || counter<3)
+		{
+			motionControl.setSpeed(0f);
+			counter++;
+		}
+		else
+		{
+			// MOD
+			this.followBox.setLocalTranslation(followBoxPos);
+			
+			float currentDistance = getCurrentDistance(trafficObjectPos);
+			//System.out.println("Distance: " + currentDistance);
+			
+			//if(trafficObject.getName().equals("car1"))
+			//	System.err.println(currentDistance);
+			
+			// set limits
+			currentDistance = Math.max(Math.min(maxDistance, currentDistance), minDistance);
+
+			//maxDistance --> 0
+			//minDistance --> 1
+			float factor = 1.0f - ((currentDistance-minDistance)/(maxDistance-minDistance));
+			motionControl.setSpeed(factor);
+		}
+		
+		// if new WP to set traffic object available, wait for NEXT update and set
+		if(isTargetWayPointAvailable && (waitForNextUpdate = !waitForNextUpdate))
+		{
+			// set traffic object to new position
+	        performWayPointChange(targetWayPointIndex);
+	        isTargetWayPointAvailable = false;
+		}
+		
+		checkIfWayPointReached();
+	}
+
 
 
 	private void checkIfWayPointReached() 
@@ -446,6 +498,13 @@ public class FollowBox
 	{
 		return followBox.getWorldTranslation();
 	}
+	
+	
+	// MOD: set followbox position
+	public void setPosition(Vector3f position)
+	{
+		followBox.setLocalTranslation(position);
+	}
 
 
 	public MotionEvent getMotionControl() 
@@ -466,8 +525,8 @@ public class FollowBox
         followBox.setLocalScale(0.4f);
         sim.getSceneNode().attachChild(followBox);
         
-        if(!settings.isPathVisible())
-        	followBox.setCullHint(CullHint.Always);
+//        if(!settings.isPathVisible())
+//        	followBox.setCullHint(CullHint.Always);
         	
         return followBox;
     }
@@ -482,6 +541,10 @@ public class FollowBox
 		// get traffic object's position on xz-plane (ignore y component)
 		Vector3f trafficObjectPosition = trafficObjectPos;
 		trafficObjectPosition.setY(0);
+		
+		//System.out.println("FollowBox: " + followBox.getWorldTranslation().toString());
+		//System.out.println("TrafficObject: " + trafficObjectPos.toString());
+		//System.out.println("------------------------------");
 		
 		// distance between box and trafficObject
 		float currentDistance = followBoxPosition.distance(trafficObjectPosition);

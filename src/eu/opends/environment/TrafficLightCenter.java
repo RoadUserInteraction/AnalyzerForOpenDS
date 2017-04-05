@@ -21,13 +21,14 @@ package eu.opends.environment;
 import java.util.LinkedList;
 import java.util.List;
 
+import eu.opends.basics.SimulationBasics;
 import eu.opends.drivingTask.scenario.Intersection;
-import eu.opends.environment.TrafficLight.TrafficLightState;
+import eu.opends.environment.TrafficLight.*;
 import eu.opends.environment.TrafficLightException.NoInternalProgramException;
 import eu.opends.hmi.HMICenter;
 import eu.opends.main.Simulator;
 import eu.opends.traffic.Waypoint;
-import eu.opends.visualization.LightningClient;
+import eu.opends.visualization.*;
 
 /**
  * This class represents the management of all traffic lights within a model. It 
@@ -56,7 +57,7 @@ public class TrafficLightCenter
 	
 	private List<Intersection> intersectionsList;
 	private static List<TrafficLight> globalTrafficLightsList;
-	private Simulator sim;
+	private SimulationBasics sim;
 	private TrafficLightMode mode;
 	private TrafficLightExternalConnector trafficLightExternalConnector;
 	private List<TrafficLightInternalProgram> trafficLightProgramList = 
@@ -72,7 +73,7 @@ public class TrafficLightCenter
 	 * @param _sim
 	 * 			Simulator for map data
 	 */
-	public TrafficLightCenter (Simulator _sim)
+	public TrafficLightCenter (SimulationBasics _sim)
 	{
 		sim = _sim;
 		
@@ -350,7 +351,13 @@ public class TrafficLightCenter
 	{
 		String direction = "";
 		String state = "";
-		LightningClient lightningClient = sim.getLightningClient();
+		
+		// MOD
+		LightningClient lightningClient = null;
+		if(sim.getClass().equals(Simulator.class))
+		{
+			lightningClient = ((Simulator)sim).getLightningClient();
+		}
 		
 		// if simulator is connected to Lightning
 		if(lightningClient != null)

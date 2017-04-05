@@ -23,11 +23,7 @@ import eu.opends.car.Car;
 import eu.opends.environment.TrafficLight;
 import eu.opends.environment.TrafficLightCenter;
 import eu.opends.environment.TrafficLightInternalProgram;
-import eu.opends.environment.TrafficLightException.AlwaysGreenException;
-import eu.opends.environment.TrafficLightException.IsGreenException;
-import eu.opends.environment.TrafficLightException.IsNotGreenException;
-import eu.opends.environment.TrafficLightException.NeverGreenException;
-import eu.opends.environment.TrafficLightException.NoInternalProgramException;
+import eu.opends.environment.TrafficLightException.*;
 import eu.opends.main.Simulator;
 
 

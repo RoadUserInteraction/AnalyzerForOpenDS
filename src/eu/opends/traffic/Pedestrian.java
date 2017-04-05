@@ -19,8 +19,6 @@
 
 package eu.opends.traffic;
 
-import java.util.ArrayList;
-
 import com.jme3.asset.AssetManager;
 import com.jme3.bullet.control.BetterCharacterControl;
 import com.jme3.light.AmbientLight;
@@ -31,16 +29,20 @@ import com.jme3.math.Vector3f;
 import com.jme3.renderer.queue.RenderQueue.ShadowMode;
 import com.jme3.scene.Node;
 
+import eu.opends.basics.SimulationBasics;
 import eu.opends.environment.TrafficLightCenter;
+import eu.opends.main.DriveAnalyzer;
 import eu.opends.main.Simulator;
 import eu.opends.tools.Util;
+
+import java.util.ArrayList;
 
 /**
  * @author Tommi S.E. Laukkanen, Rafael Math
  */
 public class Pedestrian implements AnimationListener, TrafficObject
 {
-	private Simulator sim;
+	private SimulationBasics sim;
 	private Node personNode = new Node();
 	private BetterCharacterControl characterControl;
 	private AnimationController animationController;
@@ -48,6 +50,12 @@ public class Pedestrian implements AnimationListener, TrafficObject
 	private String name;
 	private float mass = 5f;
 	private float airTime = 0;
+	
+	// MOD: save last position
+	private Vector3f currentPosition = null;
+	
+	// MOD: toggleReplay state
+	private boolean replayRunning = false;
 	
 	// the animation commands
 	private String animationStandCommand = "Stand";
@@ -64,9 +72,11 @@ public class Pedestrian implements AnimationListener, TrafficObject
 
 	PedestrianData pedestrianData;
 	boolean initialized = false;
-    public Pedestrian(Simulator sim, PedestrianData pedestrianData) 
+	
+	// MOD: Changed parameter to SimulationBasics
+    public Pedestrian(SimulationBasics sim2, PedestrianData pedestrianData) 
     {
-    	this.sim = sim;
+    	this.sim = sim2;
     	this.pedestrianData = pedestrianData;
     
     	name = pedestrianData.getName();
@@ -75,7 +85,7 @@ public class Pedestrian implements AnimationListener, TrafficObject
     	animationStandCommand = pedestrianData.getAnimationStand();
     	animationWalkCommand = pedestrianData.getAnimationWalk();
 
-		AssetManager assetManager = sim.getAssetManager();
+		AssetManager assetManager = sim2.getAssetManager();
 		Node person = (Node) assetManager.loadModel(pedestrianData.getModelPath());
 		personNode.attachChild(person);
 		person.setLocalScale(pedestrianData.getLocalScale()); // adjust scale of model
@@ -179,10 +189,29 @@ public class Pedestrian implements AnimationListener, TrafficObject
 		        //System.err.println("Current speed of character '" + name + "': " + getCurrentSpeedKmh());
 		        
 		    	animationController.update(tpf);   	
-		    }
+		    	// update movement of follow box according to pedestrians's position (not affected by sim.isPause())
+		    	// update movement of follow box according to pedestrians's position (not affected by sim.isPause())
+				
+			}
 			
-			// update movement of follow box according to pedestrians's position (not affected by sim.isPause())
-			followBox.update(personNode.getLocalTranslation());
+			if(sim.getClass().equals(DriveAnalyzer.class))
+			{
+				if(this.currentPosition != null && this.replayRunning)
+				{
+					followBox.update(personNode.getLocalTranslation(), this.currentPosition);
+					// Force pedestrian to view into correct direction
+					characterControl.setViewDirection(this.currentPosition.subtract(getPosition()));
+				}
+				if (!this.replayRunning)
+					followBox.getMotionControl().stop();
+				
+				System.out.println(personNode.getLocalTranslation());
+			}
+			else
+			{
+				followBox.update(personNode.getLocalTranslation());
+			}
+			
     	}
     }
     
@@ -257,22 +286,52 @@ public class Pedestrian implements AnimationListener, TrafficObject
     }
 
     
-	@Override
+    @Override
 	public Vector3f getPosition()
 	{
 		return personNode.getLocalTranslation();
 	}
+    
+    // EDIT
+    @Override
+	public Quaternion getRotation()
+	{
+		return personNode.getLocalRotation();
+	}
 	
+    // MOD
+    public void setReplayRunning(boolean replayRunning)
+    {
+    	this.replayRunning = replayRunning;
+    }
 
 	@Override
-	public void setPosition(Vector3f position) 
+	public void setPosition(Vector3f position)
 	{
-		characterControl.warp(position);
+		// MOD
+		if(sim.getClass().equals(DriveAnalyzer.class))
+		{
+			if (replayRunning){
+			if(this.currentPosition != null && currentPosition != position)
+			{
+				characterControl.warp(currentPosition);
+			}
+			
+			if(currentPosition != position)
+			{
+				currentPosition = position;
+			}
+			}
+		}
+		else
+		{
+			characterControl.warp(position);
+		}
 	}
 
 
 	@Override
-	public void setRotation(Quaternion quaternion) 
+	public void setRotation(Quaternion quaternion)
 	{
 		// automatic orientation in next update()
 	}
@@ -372,6 +431,7 @@ public class Pedestrian implements AnimationListener, TrafficObject
 		
 		return false;
 	}
+
 
   
 }

@@ -27,11 +27,12 @@ import com.jme3.math.Vector3f;
 import com.jme3.scene.Node;
 import com.jme3.scene.Spatial.CullHint;
 
+import eu.opends.basics.SimulationBasics;
 import eu.opends.car.SteeringCar;
 import eu.opends.main.Simulator;
 import eu.opends.tools.DistanceBar;
-import eu.opends.tools.DistanceBar.Pivot;
 import eu.opends.tools.DistanceBarSegment;
+import eu.opends.tools.DistanceBar.Pivot;
 import eu.opends.tools.DistanceBarSegment.SegmentType;
 import eu.opends.tools.Util;
 import eu.opends.traffic.PhysicalTraffic;
@@ -48,7 +49,7 @@ public class MotorwayTask
 	private float distanceBarBottom = 600;
 	private float distancebarRotation = 180;
 	
-	private Simulator sim;
+	private SimulationBasics sim;
 	private DistanceBar distanceBar = null;
 	private MotorwayPosition motorwayPosition = MotorwayPosition.OFF;
 	private boolean showDistanceBar = true;
@@ -60,7 +61,7 @@ public class MotorwayTask
 	}
 
 	
-	public MotorwayTask(Simulator sim)
+	public MotorwayTask(SimulationBasics sim)
 	{
 		this.sim = sim;
 		
@@ -106,7 +107,7 @@ public class MotorwayTask
 		TrafficCar closestLeadingCar = null;
 		TrafficCar closestFollowerCar = null;
 		
-		SteeringCar car = sim.getCar();
+		SteeringCar car = ((Simulator)sim).getCar();
 		float carX = car.getPosition().getX();
 		float carZ = car.getPosition().getZ();
 		

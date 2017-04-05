@@ -23,7 +23,7 @@ import com.jme3.math.Quaternion;
 import com.jme3.math.Vector3f;
 
 import de.dfki.automotive.kapcom.knowledgebase.KAPcomException;
-import de.dfki.automotive.kapcom.knowledgebase.ontology.Vehicle;
+import de.dfki.automotive.kapcom.knowledgebase.ontology.*;
 import eu.opends.analyzer.DataUnit;
 import eu.opends.car.SteeringCar;
 import eu.opends.drivingTask.settings.SettingsLoader.Setting;

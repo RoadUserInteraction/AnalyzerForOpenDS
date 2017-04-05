@@ -29,12 +29,13 @@ import javax.xml.xpath.XPathConstants;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
+import Jama.Matrix;
+
 import com.jme3.math.FastMath;
 import com.jme3.math.Quaternion;
 import com.jme3.math.Vector2f;
 import com.jme3.math.Vector3f;
 
-import Jama.Matrix;
 import eu.opends.basics.MapObject;
 import eu.opends.basics.SimulationBasics;
 import eu.opends.cameraFlight.CameraFlightSettings;
@@ -46,10 +47,10 @@ import eu.opends.drivingTask.scene.SceneLoader;
 import eu.opends.effects.WeatherSettings;
 import eu.opends.environment.LaneLimit;
 import eu.opends.environment.TrafficLight;
-import eu.opends.environment.TrafficLight.TrafficLightDirection;
-import eu.opends.environment.TrafficLight.TrafficLightState;
 import eu.opends.environment.TrafficLightPhase;
 import eu.opends.environment.TrafficLightPositionData;
+import eu.opends.environment.TrafficLight.TrafficLightDirection;
+import eu.opends.environment.TrafficLight.TrafficLightState;
 import eu.opends.main.DriveAnalyzer;
 import eu.opends.main.Simulator;
 import eu.opends.traffic.FollowBoxSettings;

@@ -19,10 +19,10 @@
 package eu.opends.car;
 
 import eu.opends.audio.AudioCenter;
+import eu.opends.basics.SimulationBasics;
 import eu.opends.camera.CameraFactory.CameraMode;
 import eu.opends.car.LightTexturesContainer.LightState;
 import eu.opends.car.LightTexturesContainer.TurnSignalState;
-import eu.opends.main.Simulator;
 import eu.opends.tools.PanelCenter;
 
 /**
@@ -36,18 +36,18 @@ public class TurnSignalThread extends Thread
 	private int lightChangeInterval = 375;
 	private int threadUpdateInterval = 25;
 	private LightTexturesContainer lightTexturesContainer;
-	private Simulator sim;
+	private SimulationBasics sim;
 	private Car car;
 	private TurnSignalState targetState;
 	private boolean targetStateHasChanged = false;
 	private boolean stopRequested = false;
 	
 	
-	public TurnSignalThread(LightTexturesContainer lightTexturesContainer, Simulator sim, Car car)
+	public TurnSignalThread(LightTexturesContainer lightTexturesContainer, SimulationBasics sim2, Car car)
 	{
 		super("TurnSignalThread");
 		this.lightTexturesContainer = lightTexturesContainer;
-		this.sim = sim;
+		this.sim = sim2;
 		this.car = car;
 	}
 	

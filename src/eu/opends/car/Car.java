@@ -38,6 +38,7 @@ import com.jme3.scene.Spatial.CullHint;
 import com.jme3.scene.shape.Box;
 
 import eu.opends.audio.AudioCenter;
+import eu.opends.basics.SimulationBasics;
 import eu.opends.car.LightTexturesContainer.TurnSignalState;
 import eu.opends.environment.GeoPosition;
 import eu.opends.main.Simulator;
@@ -51,7 +52,10 @@ import eu.opends.tools.Vector3d;
  */
 public abstract class Car
 {
-	protected Simulator sim;
+	//protected Simulator sim;
+	// MOD: Change class type
+	protected SimulationBasics sim;
+	
 	protected Vector3f initialPosition;
 	protected Quaternion initialRotation;
 	protected Geometry frontGeometry;
@@ -143,21 +147,21 @@ public abstract class Car
     }
 
 	
-	private void setupHeadlight(Simulator sim) 
+	private void setupHeadlight(SimulationBasics sim2) 
 	{
 		leftHeadLight = new SpotLight();
         leftHeadLight.setColor(ColorRGBA.White.mult(lightIntensity));
         leftHeadLight.setSpotRange(100);
         leftHeadLight.setSpotInnerAngle(11*FastMath.DEG_TO_RAD);
         leftHeadLight.setSpotOuterAngle(25*FastMath.DEG_TO_RAD);
-        sim.getSceneNode().addLight(leftHeadLight);
+        sim2.getSceneNode().addLight(leftHeadLight);
         
         rightHeadLight = new SpotLight();
         rightHeadLight.setColor(ColorRGBA.White.mult(lightIntensity));
         rightHeadLight.setSpotRange(100);
         rightHeadLight.setSpotInnerAngle(11*FastMath.DEG_TO_RAD);
         rightHeadLight.setSpotOuterAngle(25*FastMath.DEG_TO_RAD);
-        sim.getSceneNode().addLight(rightHeadLight);
+        sim2.getSceneNode().addLight(rightHeadLight);
 	}
 	
 	
@@ -736,7 +740,7 @@ public abstract class Car
 	}
 	
 	
-	public Simulator getSimulator() 
+	public SimulationBasics getSimulator() 
 	{
 		return sim;
 	}

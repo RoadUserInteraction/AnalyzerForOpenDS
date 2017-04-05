@@ -44,7 +44,7 @@ import eu.opends.main.Simulator;
  */
 public class TriggerCenter 
 {
-	private Simulator sim;
+	private SimulationBasics sim;
 
 	private String triggerName;
 
@@ -66,7 +66,7 @@ public class TriggerCenter
 	}
 	
 	
-	public TriggerCenter(Simulator sim) 
+	public TriggerCenter(SimulationBasics sim) 
 	{
 		this.sim = sim;
 
