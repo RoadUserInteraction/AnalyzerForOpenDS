@@ -40,4 +40,9 @@ public interface TrafficObject
 	public void setToWayPoint(String wayPointID);
 	
 	public void update(float tpf, ArrayList<TrafficObject> vehicleList);
+	
+	public Quaternion getRotation();
+	
+	// MOD:
+    public void setReplayRunning(boolean replayRunning);
 }

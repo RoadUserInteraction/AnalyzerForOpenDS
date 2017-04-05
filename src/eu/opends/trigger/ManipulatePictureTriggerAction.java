@@ -18,8 +18,8 @@
 
 package eu.opends.trigger;
 
-import java.util.Map.Entry;
 import java.util.TreeMap;
+import java.util.Map.Entry;
 
 import com.jme3.scene.Spatial;
 import com.jme3.scene.Spatial.CullHint;

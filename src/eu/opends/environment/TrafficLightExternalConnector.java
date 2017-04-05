@@ -19,10 +19,7 @@
 package eu.opends.environment;
 
 
-import java.net.DatagramPacket;
-import java.net.DatagramSocket;
-import java.net.SocketException;
-import java.net.SocketTimeoutException;
+import java.net.*;
 
 import eu.opends.main.Simulator;
 

@@ -43,14 +43,20 @@ public class DataReader
 	private BufferedReader inputReader;
 	private String nameOfDrivingTaskFile;
 	private String nameOfDriver;
+	
 	private Date fileDate;
 	
 	private Float traveledDistance = 0f;
 	private ArrayList<Vector3f> carPositionList = new ArrayList<Vector3f>();
-	private LinkedList<DataUnit> dataUnitList = new LinkedList<DataUnit>();
+	
+	private LinkedList<DataUnit> carDataUnitList = new LinkedList<DataUnit>();
+	
+	// MOD: Other traffic:
+	private LinkedList<LinkedList<DataUnit>> trafficCarDataUnitList = new LinkedList<LinkedList<DataUnit>>();
+	private LinkedList<LinkedList<DataUnit>> pedestrianDataUnitList = new LinkedList<LinkedList<DataUnit>>();
 	
 	
-	public boolean initReader(String filePath, boolean verbose) 
+	public boolean initReader(String filePath, boolean verbose)
 	{
 		String inputLine;
 		String[] splittedLineArray;
@@ -145,7 +151,7 @@ public class DataReader
 				DataUnit dataUnit = new DataUnit(new Date(timeStamp), carPosition, carRotation,
 						speed, steeringWheelPosition, acceleratorPedalPosition, brakePedalPosition,
 						isEngineOn, traveledDistance);
-				dataUnitList.add(dataUnit);
+				carDataUnitList.add(dataUnit);
 				
 				inputLine = inputReader.readLine();
 			}
@@ -159,6 +165,85 @@ public class DataReader
 		return true;
 	}
 	
+	// MOD: Load traffic data
+	public boolean loadTrafficCarData() 
+	{
+		trafficCarDataUnitList.addLast(new LinkedList<DataUnit>());
+		
+		try {
+			// get traffic data
+			String inputLine = inputReader.readLine();
+			
+			while (inputLine != null) 
+			{
+				Vector3f position = parseCarPosition(inputLine);
+				
+				Quaternion rotation = parseCarRotation(inputLine);
+				
+				Long timeStamp = parseTimeStamp(inputLine);
+
+				DataUnit dataUnit = new DataUnit(new Date(timeStamp),
+						position.getX(),
+						position.getY(),
+						position.getZ(),
+						rotation.getX(),
+						rotation.getY(),
+						rotation.getZ(),
+						rotation.getW(),
+						0, 0, 0, 0,
+						true);
+				trafficCarDataUnitList.getLast().add(dataUnit);
+				
+				inputLine = inputReader.readLine();
+			}
+
+
+		} catch (IOException e) {
+			//e.printStackTrace();
+			return false;
+		}
+				
+		return true;
+	}
+	public boolean loadPedestrianData() 
+	{
+		pedestrianDataUnitList.addLast(new LinkedList<DataUnit>());
+		
+		try {
+			// get traffic data
+			String inputLine = inputReader.readLine();
+			
+			while (inputLine != null) 
+			{
+				Vector3f position = parseCarPosition(inputLine);
+				
+				Quaternion rotation = parseCarRotation(inputLine);
+				
+				Long timeStamp = parseTimeStamp(inputLine);
+
+				DataUnit dataUnit = new DataUnit(new Date(timeStamp),
+						position.getX(),
+						position.getY(),
+						position.getZ(),
+						rotation.getX(),
+						rotation.getY(),
+						rotation.getZ(),
+						rotation.getW(),
+						0, 0, 0, 0,
+						true);
+				pedestrianDataUnitList.getLast().add(dataUnit);
+				inputLine = inputReader.readLine();
+			}
+
+
+		} catch (IOException e) {
+			//e.printStackTrace();
+			return false;
+		}
+				
+		return true;
+	}
+
 	
 	public String getNameOfDriver() 
 	{
@@ -190,9 +275,19 @@ public class DataReader
 	}
 	
 	
-	public LinkedList<DataUnit> getDataUnitList()
+	public LinkedList<DataUnit> getCarDataUnitList()
 	{
-		return dataUnitList;
+		return carDataUnitList;
+	}
+	
+	// MOD: Add getters for other traffic data unit lists
+	public LinkedList<LinkedList<DataUnit>> getTrafficCarDataUnitList()
+	{
+		return trafficCarDataUnitList;
+	}
+	public LinkedList<LinkedList<DataUnit>> getPedestrianDataUnitList()
+	{
+		return pedestrianDataUnitList;
 	}
 	
 	

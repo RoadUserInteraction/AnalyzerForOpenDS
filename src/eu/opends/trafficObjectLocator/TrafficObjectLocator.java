@@ -34,6 +34,7 @@ import com.jme3.scene.Geometry;
 import com.jme3.scene.Spatial;
 import com.jme3.scene.shape.Box;
 
+import eu.opends.basics.SimulationBasics;
 import eu.opends.camera.SimulatorCam;
 import eu.opends.car.Car;
 import eu.opends.drivingTask.settings.SettingsLoader.Setting;
@@ -45,7 +46,7 @@ import eu.opends.main.Simulator;
  */
 public class TrafficObjectLocator 
 {
-	private Simulator sim;
+	private SimulationBasics sim;
 	private Car car;
 	private List<TrafficObject> trafficObjectList;
     private Spatial trafficObjectSpatial;
@@ -55,7 +56,7 @@ public class TrafficObjectLocator
 	private String currentObjectPath;
 	
 	
-	public TrafficObjectLocator(Simulator sim, Car car)
+	public TrafficObjectLocator(SimulationBasics sim2, Car car)
 	{
 		
 		Boolean enable = Simulator.getSettingsLoader().getSetting(Setting.ObjectLocator_enable, false);
@@ -64,7 +65,7 @@ public class TrafficObjectLocator
 		
 		if(enabled)
 		{
-			this.sim = sim;
+			this.sim = sim2;
 			this.car = car;
 			
 			String fileName = "trafficObjects.txt";

@@ -22,12 +22,10 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.ListIterator;
 
-import eu.opends.environment.TrafficLight.TrafficLightState;
-import eu.opends.environment.TrafficLightCenter.TrafficLightMode;
-import eu.opends.environment.TrafficLightException.AlwaysGreenException;
-import eu.opends.environment.TrafficLightException.IsGreenException;
-import eu.opends.environment.TrafficLightException.IsNotGreenException;
-import eu.opends.environment.TrafficLightException.NeverGreenException;
+import eu.opends.basics.SimulationBasics;
+import eu.opends.environment.TrafficLight.*;
+import eu.opends.environment.TrafficLightCenter.*;
+import eu.opends.environment.TrafficLightException.*;
 import eu.opends.main.Simulator;
 
 
@@ -44,7 +42,7 @@ import eu.opends.main.Simulator;
  */
 public class TrafficLightInternalProgram extends Thread
 {
-	private Simulator sim;
+	private SimulationBasics sim;
 	private TrafficLightCenter trafficLightCenter;
 	private boolean stoprequested;
 	private String intersectionID;
@@ -64,7 +62,7 @@ public class TrafficLightInternalProgram extends Thread
 	 * intersectionID and filtering the traffic lights of this intersection 
 	 * from the list of all traffic lights.
 	 * 
-	 * @param sim
+	 * @param sim2
 	 * 			Simulator
 	 * 
 	 * @param trafficLightCenter
@@ -80,11 +78,11 @@ public class TrafficLightInternalProgram extends Thread
 	 * @param intersectionPhasesList
 	 * 			List of all traffic light phases at the given intersection
 	 */
-	public TrafficLightInternalProgram(Simulator sim, TrafficLightCenter trafficLightCenter, String intersectionID, 
+	public TrafficLightInternalProgram(SimulationBasics sim2, TrafficLightCenter trafficLightCenter, String intersectionID, 
 			List<TrafficLight> allTrafficLightsList, LinkedList<TrafficLightPhase> intersectionPhasesList) 
 	{
 		super("TrafficLightInternalProgramThread");
-		this.sim = sim;
+		this.sim = sim2;
 		this.trafficLightCenter = trafficLightCenter;
 		this.intersectionID = intersectionID;
 		this.intersectionTrafficLightsList = filterTrafficLightsOfIntersection(intersectionID,allTrafficLightsList);

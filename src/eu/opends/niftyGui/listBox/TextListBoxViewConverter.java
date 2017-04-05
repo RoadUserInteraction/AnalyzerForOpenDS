@@ -18,12 +18,12 @@
 
 package eu.opends.niftyGui.listBox;
 
-import java.util.logging.Logger;
-
 import de.lessvoid.nifty.controls.ListBox.ListBoxViewConverter;
 import de.lessvoid.nifty.controls.ListBox.ListBoxViewConverterSimple;
 import de.lessvoid.nifty.elements.Element;
 import de.lessvoid.nifty.elements.render.TextRenderer;
+
+import java.util.logging.Logger;
 
 /**
  * 

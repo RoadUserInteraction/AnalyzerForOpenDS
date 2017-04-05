@@ -22,13 +22,8 @@ import de.dfki.automotive.kapcom.knowledgebase.KAPcomException;
 import de.dfki.automotive.kapcom.knowledgebase.NetClient;
 import de.dfki.automotive.kapcom.knowledgebase.NetClient.PropertyChangedNotificationEvent;
 import de.dfki.automotive.kapcom.knowledgebase.NetClient.PropertyChangedNotificationListener;
-import de.dfki.automotive.kapcom.knowledgebase.ontology.BasicUserDimensions;
-import de.dfki.automotive.kapcom.knowledgebase.ontology.Demographics;
+import de.dfki.automotive.kapcom.knowledgebase.ontology.*;
 import de.dfki.automotive.kapcom.knowledgebase.ontology.Demographics.Gender_Enum;
-import de.dfki.automotive.kapcom.knowledgebase.ontology.OntologyException;
-import de.dfki.automotive.kapcom.knowledgebase.ontology.Seat;
-import de.dfki.automotive.kapcom.knowledgebase.ontology.User;
-import de.dfki.automotive.kapcom.knowledgebase.ontology.UserName;
 
 /**
  * 

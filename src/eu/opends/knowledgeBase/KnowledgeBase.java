@@ -21,7 +21,7 @@ package eu.opends.knowledgeBase;
 import de.dfki.automotive.kapcom.knowledgebase.KAPcomException;
 import de.dfki.automotive.kapcom.knowledgebase.NetClient;
 import de.dfki.automotive.kapcom.knowledgebase.PropertyValue;
-import de.dfki.automotive.kapcom.knowledgebase.ontology.Root;
+import de.dfki.automotive.kapcom.knowledgebase.ontology.*;
 import eu.opends.basics.SimulationBasics;
 import eu.opends.main.DriveAnalyzer;
 import eu.opends.main.Simulator;
@@ -251,7 +251,7 @@ final public class KnowledgeBase extends Thread
 					if(sim instanceof Simulator)
 						getVehicle().sendCarData(((Simulator)sim));
 					else if(sim instanceof DriveAnalyzer)
-						getVehicle().sendAnalyzerData(((DriveAnalyzer)sim).getCurrentDataUnit());
+						getVehicle().sendAnalyzerData(((DriveAnalyzer)sim).getCurrentCarDataUnit());
 				} catch (Exception ex) {
 					ex.printStackTrace();
 					System.err.println("Failed to send update to KAPcom. Will stop sending updates for 60 seconds.");

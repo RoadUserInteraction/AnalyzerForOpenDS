@@ -34,6 +34,7 @@ import com.jme3.scene.Geometry;
 import com.jme3.scene.shape.Box;
 import com.jme3.texture.Texture;
 
+import eu.opends.basics.SimulationBasics;
 import eu.opends.car.Car;
 import eu.opends.car.LightTexturesContainer.TurnSignalState;
 import eu.opends.environment.TrafficLightCenter;
@@ -54,9 +55,12 @@ public class TrafficCar extends Car implements TrafficObject
 	private float overwriteSpeed = -1;
 	private Material brickMaterial;
 	private boolean loseCargo = false;
+	
+	// MOD
+    public boolean replayRunning = false;
 
 	
-	public TrafficCar(Simulator sim, TrafficCarData trafficCarData)
+	public TrafficCar(SimulationBasics sim, TrafficCarData trafficCarData)
 	{
 		this.sim = sim;
 		
@@ -502,5 +506,12 @@ public class TrafficCar extends Car implements TrafficObject
 	{
 		overwriteSpeed = speed;
 	}
+	
+	
+	// MOD
+    public void setReplayRunning(boolean replayRunning)
+    {
+    	this.replayRunning = replayRunning;
+    }
 
 }

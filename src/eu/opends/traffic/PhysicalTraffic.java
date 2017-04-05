@@ -20,6 +20,8 @@ package eu.opends.traffic;
 
 import java.util.ArrayList;
 
+import eu.opends.basics.SimulationBasics;
+import eu.opends.main.DriveAnalyzer;
 import eu.opends.main.Simulator;
 
 /**
@@ -36,7 +38,7 @@ public class PhysicalTraffic extends Thread
 	private long lastUpdate = 0;
 
        
-	public PhysicalTraffic(Simulator sim)
+	public PhysicalTraffic(SimulationBasics sim)
 	{
 		for(TrafficCarData vehicleData : vehicleDataList)
 		{
@@ -73,7 +75,7 @@ public class PhysicalTraffic extends Thread
 	public TrafficObject getTrafficObject(String trafficObjectName) 
 	{
 		for(TrafficObject trafficObject : trafficObjectList)
-		{
+		{			
 			if(trafficObject.getName().equals(trafficObjectName))
 				return trafficObject;
 		}

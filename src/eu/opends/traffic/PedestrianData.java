@@ -53,6 +53,7 @@ public class PedestrianData
 		this.localRotation = localRotation;
 		this.modelPath = modelPath;
 		this.followBoxSettings = followBoxSettings;
+		System.out.println(this.followBoxSettings.getWayPoints().toString());
 	}
 
 
@@ -89,10 +90,13 @@ public class PedestrianData
 	public Vector3f getLocalTranslation() {
 		return localTranslation;
 	}
-
 	
 	public Quaternion getLocalRotation() {
 		return localRotation;
+	}
+	// MOD: ADD
+	public void setLocalRotation(Quaternion rotation) {
+		this.localRotation = rotation;
 	}
 
 

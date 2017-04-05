@@ -20,14 +20,14 @@ package eu.opends.tools;
 
 import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
+import java.util.TreeMap;
 import java.util.Date;
 import java.util.Map.Entry;
-import java.util.TreeMap;
 
 import com.jme3.font.BitmapFont;
-import com.jme3.font.BitmapFont.Align;
 import com.jme3.font.BitmapText;
 import com.jme3.font.Rectangle;
+import com.jme3.font.BitmapFont.Align;
 import com.jme3.math.ColorRGBA;
 import com.jme3.math.FastMath;
 import com.jme3.math.Quaternion;
@@ -42,8 +42,8 @@ import eu.opends.drivingTask.settings.SettingsLoader;
 import eu.opends.drivingTask.settings.SettingsLoader.Setting;
 import eu.opends.main.DriveAnalyzer;
 import eu.opends.main.Simulator;
-import eu.opends.niftyGui.KeyMappingGUI.GuiLayer;
 import eu.opends.niftyGui.MessageBoxGUI;
+import eu.opends.niftyGui.KeyMappingGUI.GuiLayer;
 
 /**
  * 

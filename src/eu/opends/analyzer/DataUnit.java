@@ -20,6 +20,7 @@ package eu.opends.analyzer;
 
 import java.io.Serializable;
 import java.util.Date;
+import java.util.LinkedList;
 
 import com.jme3.math.FastMath;
 import com.jme3.math.Quaternion;
@@ -382,6 +383,17 @@ public class DataUnit implements Serializable
 		this.traveledDistance = traveledDistance;
 	}
 	
+	public static LinkedList<DataUnit> interpolate(LinkedList<DataUnit> previousDataUnit, LinkedList<DataUnit> nextDataUnit, long currentRecordingTime)
+	{
+		LinkedList<DataUnit> result = new LinkedList<DataUnit>();
+		
+		for(int i = 0; i < previousDataUnit.size(); i++)
+		{
+			result.add(interpolate(previousDataUnit.get(i), nextDataUnit.get(i), currentRecordingTime));
+		}
+		
+		return result;
+	}
 	
 	public static DataUnit interpolate(DataUnit previousDataUnit, DataUnit nextDataUnit, long currentRecordingTime) 
 	{

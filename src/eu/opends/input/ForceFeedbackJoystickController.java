@@ -21,14 +21,10 @@ package eu.opends.input;
 
 import java.util.ArrayList;
 
-import at.wisch.joystick.FFJoystick;
-import at.wisch.joystick.JoystickManager;
-import at.wisch.joystick.event.FeatureNotSupportedEvent;
-import at.wisch.joystick.event.FeatureNotSupportedEventListener;
-import at.wisch.joystick.event.FeatureNotSupportedEventManager;
-import at.wisch.joystick.exception.FFJoystickException;
-import at.wisch.joystick.ffeffect.Effect;
-import at.wisch.joystick.ffeffect.SpringEffect;
+import at.wisch.joystick.*;
+import at.wisch.joystick.event.*;
+import at.wisch.joystick.exception.*;
+import at.wisch.joystick.ffeffect.*;
 import eu.opends.drivingTask.settings.SettingsLoader.Setting;
 import eu.opends.main.Simulator;
 

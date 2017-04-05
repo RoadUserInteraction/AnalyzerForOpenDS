@@ -19,18 +19,13 @@
 
 package eu.opends.traffic;
 
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
-
-import com.jme3.animation.AnimChannel;
-import com.jme3.animation.AnimControl;
-import com.jme3.animation.Animation;
-import com.jme3.animation.LoopMode;
+import com.jme3.animation.*;
 import com.jme3.scene.Geometry;
 import com.jme3.scene.Node;
 import com.jme3.scene.SceneGraphVisitorAdapter;
 import com.jme3.scene.Spatial;
+
+import java.util.*;
 
 /**
  * Animates multi mesh models with multiple AnimControllers.
@@ -200,7 +195,7 @@ public class AnimationController
 
             animationTime = 0f;
         }
-
+               
         animationTime = animationTime + speedMultiplier * tpf;
 
         for (final AnimChannel channel : animChannels.values())

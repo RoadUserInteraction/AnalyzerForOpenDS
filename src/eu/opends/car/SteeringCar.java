@@ -1,6 +1,6 @@
 /*
 *  This file is part of OpenDS (Open Source Driving Simulator).
-*  Copyright (C) 2016 Rafael Math
+*  Copyright (C) 2015 Rafael Math
 *
 *  OpenDS is free software: you can redistribute it and/or modify
 *  it under the terms of the GNU General Public License as published by
@@ -18,12 +18,33 @@
 
 package eu.opends.car;
 
+import java.io.ByteArrayOutputStream;
+import java.io.DataOutputStream;
+import java.io.IOException;
+import java.net.DatagramPacket;
+import java.net.DatagramSocket;
+import java.net.InetAddress;
+import java.net.SocketException;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
+import java.text.DecimalFormat;
+import java.util.ArrayList;
+import java.util.LinkedList;
+import java.util.List;
+
+import com.jme3.bounding.BoundingBox;
+import com.jme3.bullet.objects.VehicleWheel;
+import com.jme3.collision.CollisionResult;
 import com.jme3.collision.CollisionResults;
 import com.jme3.math.ColorRGBA;
 import com.jme3.math.FastMath;
+import com.jme3.math.Matrix3f;
 import com.jme3.math.Ray;
+import com.jme3.math.Vector2f;
 import com.jme3.math.Vector3f;
 import com.jme3.scene.Geometry;
+import com.jme3.scene.Spatial;
+import com.jme3.scene.shape.Sphere;
 
 import eu.opends.basics.SimulationBasics;
 import eu.opends.car.LightTexturesContainer.TurnSignalState;
@@ -33,9 +54,9 @@ import eu.opends.drivingTask.scenario.ScenarioLoader.CarProperty;
 import eu.opends.drivingTask.settings.SettingsLoader;
 import eu.opends.drivingTask.settings.SettingsLoader.Setting;
 import eu.opends.environment.Crosswind;
+import eu.opends.main.DriveAnalyzer;
 import eu.opends.main.SimulationDefaults;
 import eu.opends.main.Simulator;
-import eu.opends.simphynity.SimphynityController;
 import eu.opends.tools.PanelCenter;
 import eu.opends.tools.Util;
 import eu.opends.traffic.PhysicalTraffic;
@@ -57,7 +78,10 @@ public class SteeringCar extends Car
     private boolean handBrakeApplied = false;
     
     // Simphynity Motion Seat
-    private SimphynityController simphynityController;
+    private DatagramSocket socket;
+	private int gameTime = 0;
+	private long oldTime = 0;
+	private Vector3f localSpeedVector = new Vector3f(0,0,0);
     
     // adaptive cruise control
 	private boolean isAdaptiveCruiseControl = false;
@@ -69,8 +93,10 @@ public class SteeringCar extends Car
 	// crosswind (will influence steering angle)
 	private Crosswind crosswind = new Crosswind("left", 0, 0);
 	
-    
-	public SteeringCar(Simulator sim) 
+    // Wheel properties
+	private float wheelRadius;
+	
+	public SteeringCar(SimulationBasics sim) 
 	{		
 		this.sim = sim;
 		
@@ -92,15 +118,8 @@ public class SteeringCar extends Car
 		
 		minSpeed = scenarioLoader.getCarProperty(CarProperty.engine_minSpeed, SimulationDefaults.engine_minSpeed);
 		maxSpeed = scenarioLoader.getCarProperty(CarProperty.engine_maxSpeed, SimulationDefaults.engine_maxSpeed);
-			
-		decelerationBrake = scenarioLoader.getCarProperty(CarProperty.brake_decelerationBrake, 
-				SimulationDefaults.brake_decelerationBrake);
-		maxBrakeForce = 0.004375f * decelerationBrake * mass;
 		
-		decelerationFreeWheel = scenarioLoader.getCarProperty(CarProperty.brake_decelerationFreeWheel, 
-				SimulationDefaults.brake_decelerationFreeWheel);
-		maxFreeWheelBrakeForce = 0.004375f * decelerationFreeWheel * mass;
-		
+
 		engineOn = scenarioLoader.getCarProperty(CarProperty.engine_engineOn, SimulationDefaults.engine_engineOn);
 		if(!engineOn)
 			showEngineStatusMessage(engineOn);
@@ -109,13 +128,14 @@ public class SteeringCar extends Car
 		if(lightIntensityObj != null)
 			lightIntensity = lightIntensityObj;
 		
-		transmission = new Transmission(this);
+		transmission = new Transmission(this);		
 		powerTrain = new PowerTrain(this);
+		brake = new Brake(this);
 		
 		modelPath = scenarioLoader.getModelPath();
 		
 		init();
-
+				
         // allows to place objects at current position
         trafficObjectLocator = new TrafficObjectLocator(sim, this);
         
@@ -133,12 +153,11 @@ public class SteeringCar extends Car
 		SettingsLoader settingsLoader = SimulationBasics.getSettingsLoader();
         if(settingsLoader.getSetting(Setting.Simphynity_enableConnection, SimulationDefaults.Simphynity_enableConnection))
 		{
-        	String ip = settingsLoader.getSetting(Setting.Simphynity_ip, SimulationDefaults.Simphynity_ip);
-			if(ip == null || ip.isEmpty())
-				ip = "127.0.0.1";
-			int port = settingsLoader.getSetting(Setting.Simphynity_port, SimulationDefaults.Simphynity_port);
-			
-	    	simphynityController = new SimphynityController(sim, this, ip, port);
+	    	try {
+				socket = new DatagramSocket(20778);
+			} catch (SocketException e) {
+				e.printStackTrace(); 
+			}
 		}
 	}
 
@@ -170,10 +189,29 @@ public class SteeringCar extends Car
 	
 	Vector3f lastVelocity = new Vector3f(0,0,0);
 	long m_nLastChangeTime = 0;
+
+	private Brake brake;
 	
 	// will be called, in every frame
 	public void update(float tpf)
 	{
+		long time = System.currentTimeMillis();  // in milliseconds
+		long timeDiffLong = time - oldTime;
+		float timeDiff = timeDiffLong / 1000f; // in seconds
+		// to be remove
+	    Vector3f globalSpeedVector = this.getCarControl().getLinearVelocity();
+	    float heading = this.getHeadingDegree() * FastMath.DEG_TO_RAD;
+	    float speedForward = FastMath.sin(heading) * globalSpeedVector.x - FastMath.cos(heading) * globalSpeedVector.z;
+	    float speedLateral = FastMath.cos(heading) * globalSpeedVector.x + FastMath.sin(heading) * globalSpeedVector.z;
+	    float speedVertical = globalSpeedVector.y;
+	    Vector3f currentLocalSpeedVector = new Vector3f(speedForward, speedLateral, speedVertical); // in m/s
+	    Vector3f currentLocalAccelerationVector = currentLocalSpeedVector.subtract(localSpeedVector).divide(timeDiff); // in m/s^2
+	      	
+	    //System.out.println("Accel: " + currentLocalAccelerationVector.x);
+	    
+	    oldTime = time;
+	    localSpeedVector = currentLocalSpeedVector;
+	    
 		// accelerate
 		float pAccel = 0;
 		if(!engineOn)
@@ -202,26 +240,25 @@ public class SteeringCar extends Car
 			// apply acceleration according to gas pedal state
 			pAccel = powerTrain.getPAccel(tpf, acceleratorPedalIntensity) * 30f;
 		}
-		transmission.performAcceleration(pAccel);
 		
+		// Define braking force (kg*m/s^2)
+		float brakingForce = brake.getBrakingForcePerWheel();
+		float frictionForce = brake.getFrictionForcePerWheel();
+		transmission.performAcceleration(pAccel, brakingForce, frictionForce, (handBrakeApplied) ? brake.getMaxBrakingForcePerWheel() : 0.f);
+
 		// brake lights
 		setBrakeLight(brakePedalIntensity > 0);
-		
+
 		if(handBrakeApplied)
 		{
 			// hand brake
-			carControl.brake(maxBrakeForce);
 			PanelCenter.setHandBrakeIndicator(true);
 		}
 		else
 		{
-			// brake	
-			float appliedBrakeForce = brakePedalIntensity * maxBrakeForce;
-			float currentFriction = powerTrain.getFrictionCoefficient() * maxFreeWheelBrakeForce;
-			carControl.brake(appliedBrakeForce + currentFriction);
+			// brake
 			PanelCenter.setHandBrakeIndicator(false);
 		}
-		
 		
 		// lights
 		leftHeadLight.setColor(ColorRGBA.White.mult(lightIntensity));
@@ -250,20 +287,276 @@ public class SteeringCar extends Car
         
 		steeringInfluenceByCrosswind = crosswind.getCurrentSteeringInfluence();
 
-        updateFrictionSlip();
+//        updateFrictionSlip();
         
-        updateWheel();
+//        updateWheel();
         
-        if(simphynityController != null)
-        	simphynityController.update();
-		    //simphynityController.updateNervtehInstructions();
+        updateIntersectionTrigger();
+        
+        SettingsLoader settingsLoader = SimulationBasics.getSettingsLoader();
+        if(settingsLoader.getSetting(Setting.Simphynity_enableConnection, SimulationDefaults.Simphynity_enableConnection))
+		{
+			String ip = settingsLoader.getSetting(Setting.Simphynity_ip, SimulationDefaults.Simphynity_ip);
+			if(ip == null || ip.isEmpty())
+				ip = "127.0.0.1";
+			int port = settingsLoader.getSetting(Setting.Simphynity_port, SimulationDefaults.Simphynity_port);
+
+        	sendSimphynityInstructions(ip, port);
+		}
+		
+        //sendNervtehInstructions("127.0.0.1", 20777);
+	}
+
+
+	private void sendNervtehInstructions(String ip, int port)
+	{
+		long time = System.currentTimeMillis();  // in milliseconds
+		long timeDiffLong = time - oldTime;
+		float timeDiff = timeDiffLong / 1000f; // in seconds
+		
+		// send updates at most 40 times per second (acceleration changes more stable)
+		if(timeDiff > 0.0f)
+		{			
+		    Vector3f globalSpeedVector = this.getCarControl().getLinearVelocity();
+		    float heading = this.getHeadingDegree() * FastMath.DEG_TO_RAD;
+		    float speedForward = FastMath.sin(heading) * globalSpeedVector.x - FastMath.cos(heading) * globalSpeedVector.z;
+		    float speedLateral = FastMath.cos(heading) * globalSpeedVector.x + FastMath.sin(heading) * globalSpeedVector.z;
+		    float speedVertical = globalSpeedVector.y;
+		    Vector3f currentLocalSpeedVector = new Vector3f(speedForward, speedLateral, speedVertical); // in m/s
+		    Vector3f currentLocalAccelerationVector = currentLocalSpeedVector.subtract(localSpeedVector).divide(timeDiff); // in m/s^2
+		    
+		    if(getCurrentSpeedKmh() < 3 && this.getAcceleratorPedalIntensity() < 0.1f)
+		    	currentLocalAccelerationVector.x = 0;
+		    	
+		    System.out.println("Accel X: " + currentLocalAccelerationVector.x +
+		    		"Accel Y: " + currentLocalAccelerationVector.y +
+		    		"Accel Z: " + currentLocalAccelerationVector.z);
+		    
+		    oldTime = time;
+		    localSpeedVector = currentLocalSpeedVector;
+		   	    
+		    try
+		    {
+		    	InetAddress adress = InetAddress.getByName(ip);
+
+		    	String result = "[";
+		    	
+		        // localAccel
+		        float ONE_G_MS = 9.80665f;
+		        Vector3f smoothCurrentLocalAccelerationVector = doAccelerationSmoothing(currentLocalAccelerationVector);
+		        result += (Math.max(Math.min(-smoothCurrentLocalAccelerationVector.x, ONE_G_MS), -ONE_G_MS)) + ";"; // -1G - +1G            
+		        result += (Math.max(Math.min(-smoothCurrentLocalAccelerationVector.y, ONE_G_MS), -ONE_G_MS)) + ";";  // -1G - +1G
+		        result += (ONE_G_MS - Math.max(Math.min(-smoothCurrentLocalAccelerationVector.z, ONE_G_MS), -ONE_G_MS)) + ";"; // 0 - 2G
+		        
+		        // localVel
+		        Vector3f smoothCurrentLocalSpeedVector = doSpeedSmoothing(currentLocalSpeedVector);
+		        result += (Math.max(Math.min(smoothCurrentLocalSpeedVector.x / 40f, 1f), 0f)) + ";"; // 0.0 - 1.0
+		        result += (Math.max(Math.min(smoothCurrentLocalSpeedVector.y / 40f, 1f), 0f)) + ";"; // 0.0 - 1.0
+		        result += (Math.max(Math.min(-smoothCurrentLocalSpeedVector.z / 40f, 1f), 0f)) + ";"; // 0.0 - 1.0
+		     
+		        // time
+		        result += time + "]";
+		        
+		        //System.err.println(result);
+
+		        final byte[] bytes = result.getBytes();       
+		
+		    	DatagramPacket packet = new DatagramPacket(bytes, bytes.length, adress, port);
+		    	socket.send(packet);
+		    }
+		    catch (Exception e)
+		    {
+		    	e.printStackTrace();
+		    }
+		}
 	}
 	
 	
-    float leftWheelsPos = 2.2f;
+	private void sendSimphynityInstructions(String ip, int port)
+	{
+		long time = System.currentTimeMillis();  // in milliseconds
+		long timeDiffLong = time - oldTime;
+		float timeDiff = timeDiffLong / 1000f; // in seconds
+		
+		// send updates at most 40 times per second (acceleration changes more stable)
+		if(timeDiff > /*0.025f*/ 0.0f)
+		{			
+		    Vector3f globalSpeedVector = this.getCarControl().getLinearVelocity();
+		    float heading = this.getHeadingDegree() * FastMath.DEG_TO_RAD;
+		    float speedForward = FastMath.sin(heading) * globalSpeedVector.x - FastMath.cos(heading) * globalSpeedVector.z;
+		    float speedLateral = FastMath.cos(heading) * globalSpeedVector.x + FastMath.sin(heading) * globalSpeedVector.z;
+		    float speedVertical = globalSpeedVector.y;
+		    Vector3f currentLocalSpeedVector = new Vector3f(speedForward, speedLateral, speedVertical); // in m/s
+		    Vector3f currentLocalAccelerationVector = currentLocalSpeedVector.subtract(localSpeedVector).divide(timeDiff); // in m/s^2
+		    
+		    if(getCurrentSpeedKmh() < 3 && this.getAcceleratorPedalIntensity() < 0.1f)
+		    	currentLocalAccelerationVector.x = 0;
+		    	
+		    //System.err.println(currentLocalAccelerationVector.x);
+		    
+		    oldTime = time;
+		    localSpeedVector = currentLocalSpeedVector;
+		   	    
+		    try
+		    {
+		    	InetAddress adress = InetAddress.getByName(ip);
+		    	
+		        final ByteArrayOutputStream baos = new ByteArrayOutputStream();
+		        final DataOutputStream daos = new DataOutputStream(baos);
+		        
+		        // useLocalVals            
+		        daos.writeBoolean(true);
+		        daos.writeBoolean(false);
+		        daos.writeBoolean(false);
+		        daos.writeBoolean(false);
+		        
+		        // localAccel
+		        float ONE_G_MS = 9.80665f;
+		        Vector3f smoothCurrentLocalAccelerationVector = doAccelerationSmoothing(currentLocalAccelerationVector);
+		       	daos.writeFloat(convertFloat(Math.max(Math.min(-smoothCurrentLocalAccelerationVector.x, ONE_G_MS), -ONE_G_MS))); // -1G - +1G            
+		        daos.writeFloat(convertFloat(Math.max(Math.min(-smoothCurrentLocalAccelerationVector.y, ONE_G_MS), -ONE_G_MS)));  // -1G - +1G
+		        daos.writeFloat(convertFloat(ONE_G_MS - Math.max(Math.min(-smoothCurrentLocalAccelerationVector.z, ONE_G_MS), -ONE_G_MS))); // 0 - 2G
+		        
+		        // localVel
+		        Vector3f smoothCurrentLocalSpeedVector = doSpeedSmoothing(currentLocalSpeedVector);
+		        daos.writeFloat(convertFloat(Math.max(Math.min(smoothCurrentLocalSpeedVector.x / 40f, 1f), 0f))); // 0.0 - 1.0
+		        daos.writeFloat(convertFloat(Math.max(Math.min(smoothCurrentLocalSpeedVector.y / 40f, 1f), 0f))); // 0.0 - 1.0
+		        daos.writeFloat(convertFloat(Math.max(Math.min(-smoothCurrentLocalSpeedVector.z / 40f, 1f), 0f))); // 0.0 - 1.0
+		     
+		        
+		        // globalVel
+		        Vector3f globalVelocity = getCarControl().getLinearVelocity().divide(40f);
+		        daos.writeFloat(convertFloat(globalVelocity.x));
+		        daos.writeFloat(convertFloat(globalVelocity.y));
+		        daos.writeFloat(convertFloat(-globalVelocity.z));
+
+		        // rotationMatrix
+		        Matrix3f rotationMatrix = getRotation().toRotationMatrix();
+		        daos.writeFloat(convertFloat(rotationMatrix.get(0, 0)));
+		        daos.writeFloat(convertFloat(rotationMatrix.get(0, 1)));
+		        daos.writeFloat(convertFloat(rotationMatrix.get(0, 2)));
+		        daos.writeFloat(convertFloat(rotationMatrix.get(1, 0)));
+		        daos.writeFloat(convertFloat(rotationMatrix.get(1, 1)));
+		        daos.writeFloat(convertFloat(rotationMatrix.get(1, 2)));
+		        daos.writeFloat(convertFloat(rotationMatrix.get(2, 0)));
+		        daos.writeFloat(convertFloat(rotationMatrix.get(2, 1)));
+		        daos.writeFloat(convertFloat(rotationMatrix.get(2, 2)));
+		        
+		        // packetTimeMillis
+		        if(!sim.isPause() && timeDiffLong <100000)
+		        	gameTime += timeDiffLong;
+
+		        daos.writeInt(convertInt(gameTime));
+		        
+		        daos.close();
+		        
+		        final byte[] bytes = baos.toByteArray();            
+		
+		    	DatagramPacket packet = new DatagramPacket(bytes, bytes.length, adress, port);
+		    	socket.send(packet);
+
+		    	//System.err.println("Sim: " + globalSpeedVector);
+		    }
+		    catch (Exception e)
+		    {
+		    	e.printStackTrace();
+		    }
+		}
+	}
+	
+	private int smoothingFactor = 10;
+	private LinkedList<Vector3f> speedStorage = new LinkedList<Vector3f>();
+	private Vector3f doSpeedSmoothing(Vector3f speed) 
+	{		
+    	Vector3f sum = new Vector3f(0,0,0);
+    	
+    	speedStorage.addLast(speed);
+
+        for (Vector3f vector : speedStorage)
+        	sum.addLocal(vector);
+        
+        if(speedStorage.size() >= smoothingFactor)
+        	speedStorage.removeFirst();
+
+        return sum.divide(smoothingFactor);
+	}
+	
+	private LinkedList<Vector3f> accelerationStorage = new LinkedList<Vector3f>();
+	private Vector3f doAccelerationSmoothing(Vector3f acceleration) 
+	{		
+    	Vector3f sum = new Vector3f(0,0,0);
+    	
+    	accelerationStorage.addLast(acceleration);
+
+        for (Vector3f vector : accelerationStorage)
+        	sum.addLocal(vector);
+        
+        if(accelerationStorage.size() >= smoothingFactor)
+        	accelerationStorage.removeFirst();
+
+        return sum.divide(smoothingFactor);
+	}
+	
+	
+	private float convertFloat(float in)
+	{
+		final ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        final DataOutputStream daos = new DataOutputStream(baos);
+        
+        try {
+			daos.writeFloat(in);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+        byte[] byteArray = baos.toByteArray();
+        
+		ByteBuffer bb = ByteBuffer.wrap(byteArray);
+		bb.order(ByteOrder.LITTLE_ENDIAN);
+		return bb.getFloat();
+	}
+	
+	
+	private int convertInt(int in)
+	{
+		final ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        final DataOutputStream daos = new DataOutputStream(baos);
+        
+        try {
+			daos.writeFloat(in);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+        byte[] byteArray = baos.toByteArray();
+        
+		ByteBuffer bb = ByteBuffer.wrap(byteArray);
+		bb.order(ByteOrder.LITTLE_ENDIAN);
+		return bb.getInt();
+	}
+	
+	
+   /* float leftWheelsPos = 2.2f;
     float backAxleHeight = -3.0f;
-    float backAxlePos = 2.45f;
+    float backAxlePos = 2.45f;*/
     long prevTime = 0;
+    
+    private void updateIntersectionTrigger()
+    {//CN: Update the intersectionTrigger, if intersectionSphere model exists, the radius should
+    	// be updated to match the required TTC value (4s)
+    	
+    	Spatial intersectionSphere = sim.getTriggerNode().getChild("intersectionSphere");
+    	if (intersectionSphere != null){
+    		Geometry sphereGeometry = Util.findGeom(intersectionSphere, "sphere");
+    		if (sphereGeometry!=null){
+    			Sphere sphere = (Sphere) sphereGeometry.getMesh();
+    			double radius = 4 * getCurrentSpeedMs();   // 4 for TTC=4s
+//    			if (this.carControl.getAngularVelocity()<0)
+//    				radius = 0;
+    			sphere.updateGeometry(20, 20, (float)(radius)); 
+    			intersectionSphere.updateModelBound();
+    		}
+    	}
+    	
+    }
 	private void updateWheel() 
 	{     
 		long time = System.currentTimeMillis();

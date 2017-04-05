@@ -18,9 +18,10 @@
 
 package eu.opends.environment;
 
+import Jama.Matrix;
+
 import com.jme3.math.Vector3f;
 
-import Jama.Matrix;
 import eu.opends.basics.SimulationBasics;
 import eu.opends.tools.Vector3d;
 

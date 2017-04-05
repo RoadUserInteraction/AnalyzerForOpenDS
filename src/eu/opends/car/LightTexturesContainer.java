@@ -33,7 +33,7 @@ import com.jme3.scene.Node;
 import com.jme3.scene.Spatial;
 import com.jme3.texture.Texture;
 
-import eu.opends.main.Simulator;
+import eu.opends.basics.SimulationBasics;
 
 /**
  * 
@@ -41,7 +41,7 @@ import eu.opends.main.Simulator;
  */
 public class LightTexturesContainer
 {
-	private Simulator sim;
+	private SimulationBasics sim;
 	private Node carNode;
 	private LightState lightState;
 	private HashMap<LightState,HashMap<Spatial,Material>> lightTexturesContainer;
@@ -62,9 +62,9 @@ public class LightTexturesContainer
 	}
 	
 	
-	public LightTexturesContainer(Simulator sim, Car car, String lightTexturesPath) 
+	public LightTexturesContainer(SimulationBasics sim2, Car car, String lightTexturesPath) 
 	{
-		this.sim = sim;
+		this.sim = sim2;
 		this.carNode = car.getCarNode();
 		
 		// init light textures container
@@ -76,7 +76,7 @@ public class LightTexturesContainer
 		processLightTexturesFile(lightTexturesPath);
 		
 		// init turn signal thread
-		turnSignalThread = new TurnSignalThread(this, sim, car);
+		turnSignalThread = new TurnSignalThread(this, sim2, car);
 		
 		// init light state
 		//lightState = LightState.AllOff;

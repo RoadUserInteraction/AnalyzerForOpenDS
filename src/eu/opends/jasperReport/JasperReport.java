@@ -29,13 +29,14 @@ import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import net.sf.jasperreports.engine.JasperExportManager;
+import net.sf.jasperreports.engine.JasperFillManager;
+import net.sf.jasperreports.engine.JasperPrint;
+
 import eu.opends.drivingTask.settings.SettingsLoader.Setting;
 import eu.opends.main.SimulationDefaults;
 import eu.opends.main.Simulator;
 import eu.opends.tools.Util;
-import net.sf.jasperreports.engine.JasperExportManager;
-import net.sf.jasperreports.engine.JasperFillManager;
-import net.sf.jasperreports.engine.JasperPrint;
 
 /**
  * Class for handling database connection and logging to database
