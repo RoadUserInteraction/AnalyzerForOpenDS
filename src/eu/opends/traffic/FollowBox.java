@@ -182,59 +182,6 @@ public class FollowBox
 		
 		checkIfWayPointReached();
 	}
-	
-	// MOD: Extra function for DriveAnalyzer
-	public void update(Vector3f trafficObjectPos, Vector3f followBoxPos)
-	{
-		// pause movement of follower box if traffic object's distance
-		// has exceeded maximum
-		/*
-		if(maxDistanceExceeded(trafficObjectPos) || sim.isPause())
-			//motionControl.setSpeed(0f);
-			motionControl.pause();
-		else
-			//motionControl.setSpeed(0.01f);
-			motionControl.play();
-		*/
-		
-		// skip "else"-part during initialization (first 3 update loops)
-		if(sim.isPause() || counter<3)
-		{
-			motionControl.setSpeed(0f);
-			counter++;
-		}
-		else
-		{
-			// MOD
-			this.followBox.setLocalTranslation(followBoxPos);
-			
-			float currentDistance = getCurrentDistance(trafficObjectPos);
-			//System.out.println("Distance: " + currentDistance);
-			
-			//if(trafficObject.getName().equals("car1"))
-			//	System.err.println(currentDistance);
-			
-			// set limits
-			currentDistance = Math.max(Math.min(maxDistance, currentDistance), minDistance);
-
-			//maxDistance --> 0
-			//minDistance --> 1
-			float factor = 1.0f - ((currentDistance-minDistance)/(maxDistance-minDistance));
-			motionControl.setSpeed(factor);
-		}
-		
-		// if new WP to set traffic object available, wait for NEXT update and set
-		if(isTargetWayPointAvailable && (waitForNextUpdate = !waitForNextUpdate))
-		{
-			// set traffic object to new position
-	        performWayPointChange(targetWayPointIndex);
-	        isTargetWayPointAvailable = false;
-		}
-		
-		checkIfWayPointReached();
-	}
-
-
 
 	private void checkIfWayPointReached() 
 	{

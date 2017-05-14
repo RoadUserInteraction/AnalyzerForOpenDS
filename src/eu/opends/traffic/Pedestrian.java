@@ -198,7 +198,6 @@ public class Pedestrian implements AnimationListener, TrafficObject
 			{
 				if(this.currentPosition != null && this.replayRunning)
 				{
-					followBox.update(personNode.getLocalTranslation(), this.currentPosition);
 					// Force pedestrian to view into correct direction
 					characterControl.setViewDirection(this.currentPosition.subtract(getPosition()));
 				}
@@ -312,15 +311,15 @@ public class Pedestrian implements AnimationListener, TrafficObject
 		if(sim.getClass().equals(DriveAnalyzer.class))
 		{
 			if (replayRunning){
-			if(this.currentPosition != null && currentPosition != position)
-			{
-				characterControl.warp(currentPosition);
-			}
-			
-			if(currentPosition != position)
-			{
-				currentPosition = position;
-			}
+				if(this.currentPosition != null && currentPosition != position)
+				{
+					characterControl.warp(currentPosition);
+				}
+				
+				if(currentPosition != position)
+				{
+					currentPosition = position;
+				}
 			}
 		}
 		else
