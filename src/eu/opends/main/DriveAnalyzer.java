@@ -29,7 +29,6 @@ import java.util.logging.Logger;
 
 import com.jme3.material.Material;
 import com.jme3.math.Vector3f;
-import com.jme3.math.Quaternion;
 import com.jme3.math.ColorRGBA;
 import com.jme3.niftygui.NiftyJmeDisplay;
 import com.jme3.scene.Geometry;
@@ -59,10 +58,12 @@ import eu.opends.environment.TrafficLightCenter;
 import eu.opends.input.KeyBindingCenter;
 import eu.opends.knowledgeBase.KnowledgeBase;
 import eu.opends.niftyGui.AnalyzerFileSelectionGUIController;
-import eu.opends.taskDescription.contreTask.SteeringTask;
+import eu.opends.profiler.BasicProfilerState;
 import eu.opends.taskDescription.tvpTask.MotorwayTask;
 import eu.opends.tools.PanelCenter;
+import eu.opends.traffic.Pedestrian;
 import eu.opends.traffic.PhysicalTraffic;
+import eu.opends.traffic.TrafficObject;
 import eu.opends.trigger.TriggerCenter;
 
 /**
@@ -115,6 +116,8 @@ public class DriveAnalyzer extends SimulationBasics
 		
 	}
 	private MotorwayTask motorwayTask;
+	
+	LinkedList<ArrayList<Vector3f>> trafficCarPositionLists = new LinkedList<ArrayList<Vector3f>>();
 	
 	private LinkedList<DataUnit> carDataUnitList = new LinkedList<DataUnit>();
 	
@@ -211,11 +214,13 @@ public class DriveAnalyzer extends SimulationBasics
 	
 	public void simpleInitAnalyzerFile()
 	{
+		stateManager.attach(new BasicProfilerState(false));
+		
 		loadDrivingTask();
 		
 		PanelCenter.init(this);
 		
-		loadData();		
+		loadData();
 		
 		super.simpleInitApp();
 
@@ -263,7 +268,8 @@ public class DriveAnalyzer extends SimulationBasics
 		
 		// MOD: Init trigger center
 		triggerCenter.setup();
-        
+		
+		
         visualizeData();
         
 		// open TCP connection to KAPcom (knowledge component)
@@ -285,42 +291,65 @@ public class DriveAnalyzer extends SimulationBasics
 	 * 
 	 * @param analyzerFilePath
 	 */
-	private void loadData() 
+	private void loadData()
 	{
 		dataReader.initReader(analyzerFilePath, true);
 		dataReader.loadDriveData();
 				
 		carPositionList = dataReader.getCarPositionList();
 		
+		// MOD: TrafficCar position list
+		trafficCarPositionLists = dataReader.getTrafficCarPositionLists();
+		
 		totalDistance = dataReader.getTotalDistance();
 		carDataUnitList = dataReader.getCarDataUnitList();
 		
 		
 		// MOD: For other traffic check folder 'trafficData'
-		int trackIndex = Integer.parseInt(analyzerFilePath.substring(analyzerFilePath.lastIndexOf("track") + 5, analyzerFilePath.length() - 4));
-		File trafficCarFolder = new File((new File(analyzerFilePath)).getParent() + "/trafficData_track" + trackIndex + "/trafficCar/");
-	    for (final File fileEntry : trafficCarFolder.listFiles())
-	    {
-	        if (fileEntry.isFile())
-	        {
-	        	trafficCarNames.add(fileEntry.getName().replaceFirst("[.][^.]+$", ""));
-	        	dataReader.initReader(fileEntry.getAbsolutePath(), false);
-	        	dataReader.loadTrafficCarData();
-	        }
-	    }
-	    trafficCarDataUnitList = dataReader.getTrafficCarDataUnitList();
+		String trackStr = "_track";
+		try
+		{
+			// Track available
+			int trackIndex = Integer.parseInt(analyzerFilePath.substring(analyzerFilePath.lastIndexOf("track") + 5, analyzerFilePath.length() - 4));	
+			trackStr += trackIndex;
+		}
+		catch(Exception ex)
+		{
+			trackStr = "";
+		}
+		try
+		{
+			File trafficCarFolder = new File((new File(analyzerFilePath)).getParent() + "/trafficData" + trackStr + "/trafficCar/");
+		    for (final File fileEntry : trafficCarFolder.listFiles())
+		    {
+		        if (fileEntry.isFile())
+		        {
+		        	trafficCarNames.add(fileEntry.getName().replaceFirst("[.][^.]+$", ""));
+		        	dataReader.initReader(fileEntry.getAbsolutePath(), false);
+		        	dataReader.loadTrafficCarData();
+		        }
+		    }
+		    trafficCarDataUnitList = dataReader.getTrafficCarDataUnitList();
+		}
+		catch(Exception ex)
+		{}
 	    
-	    File pedestrianFolder = new File((new File(analyzerFilePath)).getParent() + "/trafficData_track" + trackIndex + "/pedestrian/");
-	    for (final File fileEntry : pedestrianFolder.listFiles())
-	    {
-	        if (fileEntry.isFile())
-	        {
-	        	pedestrianNames.add(fileEntry.getName().replaceFirst("[.][^.]+$", ""));
-	        	dataReader.initReader(fileEntry.getAbsolutePath(), false);
-	        	dataReader.loadPedestrianData();
-	        }
-	    }
-	    pedestrianDataUnitList = dataReader.getPedestrianDataUnitList();
+		try
+		{
+		    File pedestrianFolder = new File((new File(analyzerFilePath)).getParent() + "/trafficData" + trackStr + "/pedestrian/");
+		    for (final File fileEntry : pedestrianFolder.listFiles())
+		    {
+		        if (fileEntry.isFile())
+		        {
+		        	pedestrianNames.add(fileEntry.getName().replaceFirst("[.][^.]+$", ""));
+		        	dataReader.initReader(fileEntry.getAbsolutePath(), false);
+		        	dataReader.loadPedestrianData();
+		        }
+		    }
+		    pedestrianDataUnitList = dataReader.getPedestrianDataUnitList();
+		}
+		catch(Exception ex)
+		{}
 		
 		if(carDataUnitList.size() > 0)
 			initialTimeStamp = carDataUnitList.get(0).getDate().getTime();
@@ -328,7 +357,7 @@ public class DriveAnalyzer extends SimulationBasics
 	
 	
     public void toggleReplay()
-    {
+    {    	
     	if(!replayIsRunning)
     		startReplay();
     	else
@@ -339,7 +368,7 @@ public class DriveAnalyzer extends SimulationBasics
     public void startReplay()
     {
     	replayIsRunning = true;
-    	
+    	    	
 		// end has been reached
 		if((targetIndex + 1) >= carDataUnitList.size())
 		{
@@ -364,7 +393,7 @@ public class DriveAnalyzer extends SimulationBasics
     }
 	
     
-	private void loadDrivingTask() 
+	private void loadDrivingTask()
 	{
 		String drivingTaskName = dataReader.getNameOfDrivingTaskFile();
 		File drivingTaskFile = new File(drivingTaskName);
@@ -465,11 +494,10 @@ public class DriveAnalyzer extends SimulationBasics
 		// visualize line
 		Curve line = new Curve(carPositionList.toArray(new Vector3f[0]), 1);
 		line.setMode(Mode.Lines);
-		line.setLineWidth(4f);
+		line.setLineWidth(2f);	// originally 4f
 		Geometry geoLine = new Geometry("drivenLine", line);
 	    geoLine.setMaterial(drivenMaterial);
 	    lineNode.attachChild(geoLine);
-
 	
 	    // visualize cones
 	    Material coneMaterial = new Material(assetManager,"Common/MatDefs/Misc/Unshaded.j3md");
@@ -591,10 +619,13 @@ public class DriveAnalyzer extends SimulationBasics
 	// MOD: Add parameters for traffic data units
 	private void updateView(DataUnit carDataUnit, LinkedList<DataUnit> trafficCarDataUnit, LinkedList<DataUnit> pedestrianDataUnit) 
 	{
+		// Store previous data units
+		LinkedList<DataUnit> previousPedestrianDataUnit = currentPedestrianDataUnit;
+		
 		currentCarDataUnit = carDataUnit;
 		currentTrafficCarDataUnit = trafficCarDataUnit;
 		currentPedestrianDataUnit = pedestrianDataUnit;
-				
+		
 		target.setLocalTranslation(currentCarDataUnit.getCarPosition());
 		target.setLocalRotation(currentCarDataUnit.getCarRotation());
 		cameraFactory.updateCamera();
@@ -633,8 +664,25 @@ public class DriveAnalyzer extends SimulationBasics
 		}
 		for(int i = 0; i < pedestrianNames.size(); i++)
 		{
-			physicalTraffic.getTrafficObject(pedestrianNames.get(i)).setReplayRunning(this.replayIsRunning);
+			float walkingSpeed = 0.0f;
+
+			if((float)currentPedestrianDataUnit.get(i).getSpeed() > 0.0)
+			{
+				// In case there is already a speed available in the data
+				walkingSpeed = (float)currentPedestrianDataUnit.get(i).getSpeed();
+			}
+			else if(previousPedestrianDataUnit != null)
+			{
+				// If no speed available, calculate from current and previous position
+				float ds = currentPedestrianDataUnit.get(i).getCarPosition().subtract(previousPedestrianDataUnit.get(i).getCarPosition()).length();
+				int dt = (int) (currentPedestrianDataUnit.get(i).getDate().getTime() - previousPedestrianDataUnit.get(i).getDate().getTime());
+				
+				walkingSpeed = ds / (float)dt * 3600f;
+			}
+			
+			physicalTraffic.getTrafficObject(pedestrianNames.get(i)).setWalkingSpeedKmh(walkingSpeed);
 			physicalTraffic.getTrafficObject(pedestrianNames.get(i)).setPosition(currentPedestrianDataUnit.get(i).getCarPosition());
+			physicalTraffic.getTrafficObject(pedestrianNames.get(i)).setRotation(currentPedestrianDataUnit.get(i).getCarRotation());
 		}
 				
 		updateMessageBox();
@@ -683,12 +731,12 @@ public class DriveAnalyzer extends SimulationBasics
 		
 		String steeringWheelString = " steering wheel: " + decimalFormat.format(-100*currentCarDataUnit.getSteeringWheelPos()) + "%";
 		
-		String acceleratorString = " accelleration: " + decimalFormat.format(100*currentCarDataUnit.getAcceleratorPedalPos()) + "%";
+		String acceleratorString = " acceleration: " + decimalFormat.format(100*currentCarDataUnit.getAcceleratorPedalPos()) + "%";
 		
 		String brakeString = " brake: " + decimalFormat.format(100*currentCarDataUnit.getBrakePedalPos()) + "%";
 		
 		String timeBuffer = "";
-		for(int i = 130; i>timeString.length();i--)
+		for(int i = 130; i>timeString.length(); i--)
 			timeBuffer += " ";
 		
 		String distanceBuffer = "";
@@ -725,7 +773,7 @@ public class DriveAnalyzer extends SimulationBasics
 	
 
     @Override
-    public void simpleUpdate(float tpf) 
+    public void simpleUpdate(float tpf)
     {
     	if(initializationFinished)
     	{
@@ -734,9 +782,18 @@ public class DriveAnalyzer extends SimulationBasics
 			
 			// MOD: Update trigger center
 			triggerCenter.doTriggerChecks();
-			
+						
 			// MOD: Update traffic
-			physicalTraffic.update(tpf);
+			for(TrafficObject trafficObject : PhysicalTraffic.getTrafficObjectList())
+				if(trafficObject.getClass().equals(Pedestrian.class))
+					trafficObject.update(tpf,  PhysicalTraffic.getTrafficObjectList());	
+
+			
+			// MOD: replayPlaying update
+			for(int i = 0; i < pedestrianNames.size(); i++)
+			{
+				physicalTraffic.getTrafficObject(pedestrianNames.get(i)).setReplayRunning(replayIsRunning);
+			}
 			
 			motorwayTask.update(tpf);
 			
@@ -745,8 +802,7 @@ public class DriveAnalyzer extends SimulationBasics
 			
 			if(replayIsRunning)
 				updatePosition();
-			
-			
+						
 			try {
 				Thread.sleep((long) (Math.max((1000/maxFramerate)-tpf,0)));
 			} catch (InterruptedException e) {
@@ -770,10 +826,9 @@ public class DriveAnalyzer extends SimulationBasics
     }
     
 
-    private void updatePosition() 
+    private void updatePosition()
 	{
-    	// Offset changed from +1 to +2
-		if((targetIndex + 2) < carDataUnitList.size())
+		if((targetIndex + 1) < carDataUnitList.size())
 		{
 			// offset translates current time string to recording time
 			long currentRecordingTime = System.currentTimeMillis() - offset;
@@ -782,15 +837,15 @@ public class DriveAnalyzer extends SimulationBasics
 			if(currentRecordingTime >= timeAtNextTarget)
 			{				
 				targetIndex++;
-				updateView(carDataUnitList.get(targetIndex), getDataUnitRow(trafficCarDataUnitList, targetIndex), getDataUnitRow(pedestrianDataUnitList, targetIndex + 1));
+				updateView(carDataUnitList.get(targetIndex), getDataUnitRow(trafficCarDataUnitList, targetIndex), getDataUnitRow(pedestrianDataUnitList, targetIndex));
 			}
 			else
 			{
 				// provide previous and next data units
 				DataUnit previous = carDataUnitList.get(targetIndex);
 				DataUnit next = carDataUnitList.get(targetIndex+1);
-				
-				// MOD: Also for other traffic
+								
+				// MOD: previous and next data units for other traffic
 				LinkedList<DataUnit> previousTrafficCar = getDataUnitRow(trafficCarDataUnitList, targetIndex);
 				LinkedList<DataUnit> nextTrafficCar = getDataUnitRow(trafficCarDataUnitList, targetIndex+1);
 				LinkedList<DataUnit> previousPedestrian = getDataUnitRow(pedestrianDataUnitList, targetIndex);
@@ -842,10 +897,10 @@ public class DriveAnalyzer extends SimulationBasics
 		}
 		
 		// MOD: Close other traffic
-		physicalTraffic.close();
+		//physicalTraffic.close();
 
 		super.destroy();
-		//System.exit(0);
+		System.exit(0);
     }
 	
 	

@@ -37,6 +37,7 @@ import com.jme3.ui.Picture;
 import eu.opends.basics.SimulationBasics;
 import eu.opends.drivingTask.settings.SettingsLoader;
 import eu.opends.drivingTask.settings.SettingsLoader.Setting;
+import eu.opends.main.DriveAnalyzer;
 import eu.opends.main.Simulator;
 import eu.opends.oculusRift.StereoCamAppState;
 
@@ -325,18 +326,33 @@ public abstract class CameraFactory
 		else
 			cam_i = new Camera(width, height);
 		
+		
 		// setup frustum according to number and angle of different cameras
         float width = FastMath.tan(angleBetweenAdjacentCameras * FastMath.DEG_TO_RAD * .5f) * frustumNear;
         float height = width * total / aspectRatio;
 		cam_i.setFrustum(frustumNear, frustumFar, -width, width, height, -height);
 		cam_i.setParallelProjection(false);
 		cam_i.setViewPort(viewPortLeft, viewPortRight, 0f, 1f);
+		
+		// MOD: Other views in Analyzer
+		if(sim instanceof DriveAnalyzer)
+		{
+			if(index == 2)
+			{
+				cam_i.setLocation(new Vector3f(3.75f, 20.0f, 10.5f));
+				cam_i.setRotation(new Quaternion().fromAngles(90 * FastMath.DEG_TO_RAD, 180 * FastMath.DEG_TO_RAD, 0));
+			}
+			else if(index == 3)
+			{
+				cam_i.setLocation(new Vector3f(14.0f, 10.0f, -10.0f));
+				cam_i.setRotation(new Quaternion().fromAngles(20 * FastMath.DEG_TO_RAD, -30 * FastMath.DEG_TO_RAD, 0));	}
+		}
 
 		// setup camera node and add it to main camera node
 		CameraNode camNode = new CameraNode("CamNode"+index, cam_i);
 		camNode.setControlDir(ControlDirection.SpatialToCamera);
 		camNode.setLocalTranslation(new Vector3f(0, 0, 0));
-		camNode.setLocalRotation(new Quaternion().fromAngles(0, (180+angle)*FastMath.DEG_TO_RAD, 0));
+		camNode.setLocalRotation(new Quaternion().fromAngles(0, (180+angle)*FastMath.DEG_TO_RAD, 0));				
 		frontCameraNode.attachChild(camNode);
 		
 		// setup view port

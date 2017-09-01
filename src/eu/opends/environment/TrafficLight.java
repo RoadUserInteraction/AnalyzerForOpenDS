@@ -33,7 +33,7 @@ import com.jme3.scene.Spatial;
 import com.jme3.scene.Spatial.CullHint;
 import com.jme3.scene.shape.Box;
 
-import eu.opends.main.Simulator;
+import eu.opends.basics.SimulationBasics;
 import eu.opends.trigger.TriggerCenter;
 
 
@@ -80,7 +80,7 @@ public class TrafficLight
 	}
 	
 	
-	private Simulator sim;
+	private SimulationBasics sim;
 	private Spatial trafficLightObject;
 	private String name;
 	private String intersectionID;
@@ -92,7 +92,7 @@ public class TrafficLight
 	private TrafficLightPositionData positionData;
 	
 
-	public TrafficLight(Simulator sim, String trafficLightID, String trafficLightTriggerID,
+	public TrafficLight(SimulationBasics sim, String trafficLightID, String trafficLightTriggerID,
 			String trafficLightPhaseTriggerID, String trafficLightGroupID, 
 			TrafficLightState initialState, TrafficLightDirection direction, int phasePosition,
 			ArrayList<String> requiresRedStringList, TrafficLightPositionData positionData)
@@ -108,7 +108,7 @@ public class TrafficLight
 		this.positionData = positionData;
 		updateTexture();
 		
-		if(sim instanceof Simulator)
+		//if(sim instanceof Simulator)
 		{
 			// check whether specified scene object is available
 			// if available, move it to trigger node (sub node of scene node)

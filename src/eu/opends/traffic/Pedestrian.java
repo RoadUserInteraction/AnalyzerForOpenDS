@@ -32,7 +32,6 @@ import com.jme3.scene.Node;
 import eu.opends.basics.SimulationBasics;
 import eu.opends.environment.TrafficLightCenter;
 import eu.opends.main.DriveAnalyzer;
-import eu.opends.main.Simulator;
 import eu.opends.tools.Util;
 
 import java.util.ArrayList;
@@ -50,10 +49,7 @@ public class Pedestrian implements AnimationListener, TrafficObject
 	private String name;
 	private float mass = 5f;
 	private float airTime = 0;
-	
-	// MOD: save last position
-	private Vector3f currentPosition = null;
-	
+		
 	// MOD: toggleReplay state
 	private boolean replayRunning = false;
 	
@@ -110,10 +106,10 @@ public class Pedestrian implements AnimationListener, TrafficObject
     private void init()
     {
 		// add to physics state
-		sim.getBulletAppState().getPhysicsSpace().add(characterControl); 
-		sim.getBulletAppState().getPhysicsSpace().addAll(personNode); 
+		sim.getBulletAppState().getPhysicsSpace().add(characterControl);
+		sim.getBulletAppState().getPhysicsSpace().addAll(personNode);
 		sim.getSceneNode().attachChild(personNode);
-		  
+		
 		animationController = new AnimationController(personNode);
 		animationController.setAnimationListener(this);
 		
@@ -121,96 +117,109 @@ public class Pedestrian implements AnimationListener, TrafficObject
 		
 		followBox = new FollowBox(sim, this, pedestrianData.getFollowBoxSettings());
 		
+		// MOD: In Anlyzer, 
+		if(sim instanceof DriveAnalyzer)
+		{
+			
+		}
+		
 		initialized = true;
     }
     
     
     @Override
-	public void update(float tpf, ArrayList<TrafficObject> vehicleList) 
+    public void update(float tpf, ArrayList<TrafficObject> vehicleList)
     {
     	// prevent pedestrians from high jump when adding to the physics engine
     	if(tpf < 1.0f && !initialized)
     		init();
-    	
+
     	if(initialized)
     	{
-			if(!sim.isPause())
-			{
-		    	// update speed for current way point segment
-		    	float nextWalkingSpeedKmh = Math.max(followBox.getSpeed(),0);
-		    	
-		    	if(!enabled)
-		    		nextWalkingSpeedKmh = 0;
-		    	
-		    	if(nextWalkingSpeedKmh != walkingSpeedKmh)
-		    	{
-		    		walkingSpeedKmh = nextWalkingSpeedKmh;
-		    		walkingSpeedChanged = true;
-		    	}
-		    	
-		        if (!characterControl.isOnGround()) 
-		            airTime += tpf;
-		        else
-		            airTime = 0;
-		        
-		        // compute view direction (towards car) in upright walking position (y = 0)
-		        Vector3f viewDirection = followBox.getPosition().subtract(personNode.getLocalTranslation());
-		        viewDirection.setY(0);
-		
-		        float distance = viewDirection.length();
-		        if (distance != 0)
-		        	characterControl.setViewDirection(viewDirection);
-		       
-		        
-		        if (distance < 0.1f || obstaclesInTheWay(vehicleList))
-		        { 
-		        	if (!animationStandCommand.equals(animationController.getAnimationName())) 
-		        		animationController.animate(animationStandCommand, 1f, 1f, 0);
-		
-		        	characterControl.setWalkDirection(new Vector3f(0,0,0)); // stop walking
-		        } 
-		        else 
-		        {
-		            if (airTime > 0.3f)
-		            {
-		            	if (!animationStandCommand.equals(animationController.getAnimationName()))
-		            		animationController.animate(animationStandCommand, 1f, 1f, 0);
-		            }
-		            else if (!animationWalkCommand.equals(animationController.getAnimationName()) || walkingSpeedChanged)
-		            {
-		            		animationController.animate(animationWalkCommand, (walkingSpeedKmh/3.6f)*2.0f, 0.7f, 0);
-		            		walkingSpeedChanged = false;
-		            }
-		            
-		            // the use of the multiplier is to control the rate of movement for character walk speed (in m/s)
-		            characterControl.setWalkDirection(viewDirection.normalize().multLocal((walkingSpeedKmh/3.6f)));
-		        }
-		
-		        //System.err.println("Current speed of character '" + name + "': " + getCurrentSpeedKmh());
-		        
-		    	animationController.update(tpf);   	
-		    	// update movement of follow box according to pedestrians's position (not affected by sim.isPause())
-		    	// update movement of follow box according to pedestrians's position (not affected by sim.isPause())
-				
-			}
-			
-			if(sim.getClass().equals(DriveAnalyzer.class))
-			{
-				if(this.currentPosition != null && this.replayRunning)
-				{
-					// Force pedestrian to view into correct direction
-					characterControl.setViewDirection(this.currentPosition.subtract(getPosition()));
-				}
-				if (!this.replayRunning)
-					followBox.getMotionControl().stop();
-				
-				System.out.println(personNode.getLocalTranslation());
-			}
-			else
-			{
-				followBox.update(personNode.getLocalTranslation());
-			}
-			
+    		// MOD: Check if analyzer is running, own Analyzer logic
+    		if(sim instanceof DriveAnalyzer)
+    		{
+    			if(!sim.isPause())
+    			{
+    				followBox.getMotionControl().stop();
+    				if(!this.replayRunning)
+    				{
+    					walkingSpeedKmh = 0.0f;
+    					animationController.animate(animationWalkCommand, (walkingSpeedKmh/3.6f)*2.0f, 0.7f, 0);
+    					walkingSpeedChanged = false;
+    				}
+    				else
+    				{
+    					if (!animationWalkCommand.equals(animationController.getAnimationName()) || walkingSpeedChanged)
+    					{
+    						animationController.animate(animationWalkCommand, (walkingSpeedKmh/3.6f)*2.0f, 0.7f, 0);
+    						walkingSpeedChanged = false;
+    					}
+    				}
+    			}
+    		}
+    		else
+    		{
+    			if(!sim.isPause())
+    			{
+    				// update speed for current way point segment
+    				float nextWalkingSpeedKmh = Math.max(followBox.getSpeed(),0);
+
+    				if(!enabled)
+    					nextWalkingSpeedKmh = 0;
+
+    				if(nextWalkingSpeedKmh != walkingSpeedKmh)
+    				{
+    					walkingSpeedKmh = nextWalkingSpeedKmh;
+    					walkingSpeedChanged = true;
+    				}
+
+    				if (!characterControl.isOnGround())
+    					airTime += tpf;
+    				else
+    					airTime = 0;
+
+    				// compute view direction (towards car) in upright walking position (y = 0)
+    				Vector3f viewDirection = followBox.getPosition().subtract(personNode.getLocalTranslation());
+    				viewDirection.setY(0);
+
+    				float distance = viewDirection.length();
+    				if (distance != 0)
+    					characterControl.setViewDirection(viewDirection);
+
+
+    				if (distance < 0.1f || obstaclesInTheWay(vehicleList))
+    				{ 
+    					if (!animationStandCommand.equals(animationController.getAnimationName())) 
+    						animationController.animate(animationStandCommand, 1f, 1f, 0);
+
+    					characterControl.setWalkDirection(new Vector3f(0,0,0)); // stop walking
+    				} 
+    				else 
+    				{
+    					if (airTime > 0.3f)
+    					{
+    						if (!animationStandCommand.equals(animationController.getAnimationName()))
+    							animationController.animate(animationStandCommand, 1f, 1f, 0);
+    					}
+    					else if (!animationWalkCommand.equals(animationController.getAnimationName()) || walkingSpeedChanged)
+    					{
+    						animationController.animate(animationWalkCommand, (walkingSpeedKmh/3.6f)*2.0f, 0.7f, 0);
+    						walkingSpeedChanged = false;
+    					}
+
+    					// the use of the multiplier is to control the rate of movement for character walk speed (in m/s)
+    					characterControl.setWalkDirection(viewDirection.normalize().multLocal((walkingSpeedKmh/3.6f)));
+    				}
+
+    				//System.err.println("Current speed of character '" + name + "': " + getCurrentSpeedKmh());
+
+    				animationController.update(tpf); 
+    			}
+
+    			// update movement of follow box according to pedestrians's position (not affected by sim.isPause())
+    			followBox.update(personNode.getLocalTranslation());
+    		}
     	}
     }
     
@@ -281,7 +290,7 @@ public class Pedestrian implements AnimationListener, TrafficObject
     @Override
     public void onAnimCycleDone(final String animationName)
     {
-    	
+    	System.out.println("Animation cycle done!");
     }
 
     
@@ -307,25 +316,7 @@ public class Pedestrian implements AnimationListener, TrafficObject
 	@Override
 	public void setPosition(Vector3f position)
 	{
-		// MOD
-		if(sim.getClass().equals(DriveAnalyzer.class))
-		{
-			if (replayRunning){
-				if(this.currentPosition != null && currentPosition != position)
-				{
-					characterControl.warp(currentPosition);
-				}
-				
-				if(currentPosition != position)
-				{
-					currentPosition = position;
-				}
-			}
-		}
-		else
-		{
-			characterControl.warp(position);
-		}
+		characterControl.warp(position);
 	}
 
 
@@ -333,6 +324,8 @@ public class Pedestrian implements AnimationListener, TrafficObject
 	public void setRotation(Quaternion quaternion)
 	{
 		// automatic orientation in next update()
+		characterControl.setViewDirection(quaternion.getRotationColumn(2));
+		characterControl.setWalkDirection(quaternion.getRotationColumn(2).normalize().multLocal((0/3.6f)));
 	}
 
 
@@ -431,6 +424,15 @@ public class Pedestrian implements AnimationListener, TrafficObject
 		return false;
 	}
 
+	// MOD
+	public void setWalkingSpeedKmh(float walkingSpeedKmh) {
+		//if(this.walkingSpeedKmh != walkingSpeedKmh)
+		if(Math.abs(this.walkingSpeedKmh - walkingSpeedKmh) > 3.0)
+		{
+			this.walkingSpeedChanged = true;
+			this.walkingSpeedKmh = walkingSpeedKmh;
+		}
+	}
 
   
 }

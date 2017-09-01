@@ -24,14 +24,12 @@ import com.jme3.animation.LoopMode;
 import com.jme3.cinematic.MotionPath;
 import com.jme3.cinematic.events.MotionEvent;
 import com.jme3.material.Material;
-import com.jme3.math.ColorRGBA;
 import com.jme3.math.FastMath;
 import com.jme3.math.Quaternion;
 import com.jme3.math.Vector3f;
 import com.jme3.math.Spline.SplineType;
 import com.jme3.scene.Geometry;
 import com.jme3.scene.Spatial;
-import com.jme3.scene.Spatial.CullHint;
 import com.jme3.scene.shape.Box;
 
 import eu.opends.basics.SimulationBasics;
@@ -44,7 +42,6 @@ public class FollowBox
 {
 	private SimulationBasics sim;
 	private TrafficObject trafficObject;
-	private FollowBoxSettings settings;
 	private List<Waypoint> waypointList;
 	private float minDistance;
 	private float maxDistance;
@@ -62,8 +59,6 @@ public class FollowBox
 	{
 		this.sim = sim2;
 		this.trafficObject = trafficObject;
-		this.settings = settings;
-		
 		waypointList = settings.getWayPoints();
 		minDistance = settings.getMinDistance();
 		maxDistance = settings.getMaxDistance();
@@ -445,13 +440,6 @@ public class FollowBox
 	{
 		return followBox.getWorldTranslation();
 	}
-	
-	
-	// MOD: set followbox position
-	public void setPosition(Vector3f position)
-	{
-		followBox.setLocalTranslation(position);
-	}
 
 
 	public MotionEvent getMotionControl() 
@@ -463,11 +451,12 @@ public class FollowBox
     private Spatial createFollowBox() 
     {
 		// add spatial representing the position the driving car is steering towards
-		Box box = new Box(1f, 1f, 1f);
+    	//Box box = new Box(1f, 1f, 1f);
+    	Box box = new Box(0f, 0f, 0f);
 		Geometry followBox = new Geometry("followBox", box);
 		followBox.setLocalTranslation(0, 0, 0);
 		Material followBoxMaterial = new Material(sim.getAssetManager(), "Common/MatDefs/Misc/Unshaded.j3md");
-		followBoxMaterial.setColor("Color", ColorRGBA.Green);
+		//followBoxMaterial.setColor("Color", ColorRGBA.Green);
 		followBox.setMaterial(followBoxMaterial);
         followBox.setLocalScale(0.4f);
         sim.getSceneNode().attachChild(followBox);

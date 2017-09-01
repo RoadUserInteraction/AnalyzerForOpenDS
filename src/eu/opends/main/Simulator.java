@@ -508,7 +508,7 @@ public class Simulator extends SimulationBasics
     {
     	if(initializationFinished)
     	{
-			super.simpleUpdate(tpf);
+			super.simpleUpdate(tpf);		
 			
 			// updates camera
 			cameraFactory.updateCamera();
@@ -672,6 +672,9 @@ public class Simulator extends SimulationBasics
 			car.close();
 			
 			physicalTraffic.close();
+			
+			// MOD: flush trigger data file
+			//dataWriter.flushTriggerData();
 			
 			if(settingsControllerServer != null)
 				settingsControllerServer.close();

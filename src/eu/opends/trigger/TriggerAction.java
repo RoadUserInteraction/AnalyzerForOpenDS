@@ -25,7 +25,7 @@ package eu.opends.trigger;
  * 
  * @author Rafael Math
  */
-public abstract class TriggerAction 
+public abstract class TriggerAction
 {
 	private float delay;
 	private int maxRepeatCounter;

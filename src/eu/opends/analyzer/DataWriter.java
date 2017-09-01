@@ -45,7 +45,7 @@ import eu.opends.traffic.TrafficObject;
  * @author Saied
  * 
  */
-public class DataWriter 
+public class DataWriter
 {
 	private Calendar startTime = new GregorianCalendar();
 
@@ -60,6 +60,12 @@ public class DataWriter
 	private long lastAnalyzerDataSave;
 	private Car car;	
 	private File analyzerDataFile;
+	
+	// MOD: Trigger data
+	/*private File triggerDataFile;
+	private File outFileTrigger;
+	private ArrayList<String[]> arrayTriggerDataList;*/
+	
 	private boolean dataWriterEnabled = false;
 	private String relativeDrivingTaskPath;
 
@@ -126,7 +132,7 @@ public class DataWriter
 	}
 	*/
 	
-	// MOD: Constructor
+	// MOD: new Constructor
 	public DataWriter(String outputFolder, Car car, String driverName, String absoluteDrivingTaskPath, int trackNumber) 
 	{
 		this.car = car;
@@ -147,6 +153,9 @@ public class DataWriter
 		{
 			analyzerDataFile = new File(outputFolder + "/carData_track" + trackNumber + ".txt");
 			
+			// MOD: Trigger file
+			//triggerDataFile = new File(outputFolder + "/triggerData_track" + trackNumber + ".txt");
+			
 			// MOD: Create directory for other traffic
 			Util.makeDirectory(outputFolder + "/trafficData_track" + trackNumber);
 			Util.makeDirectory(outputFolder + "/trafficData_track" + trackNumber + "/trafficCar");
@@ -165,6 +174,9 @@ public class DataWriter
 		{
 			analyzerDataFile = new File(outputFolder + "/carData.txt");
 			
+			// MOD: Trigger file
+			//triggerDataFile = new File(outputFolder + "/triggerData.txt");
+			
 			// MOD: Create directory for other traffic
 			Util.makeDirectory(outputFolder + "/trafficData");
 			Util.makeDirectory(outputFolder + "/trafficData/trafficCar");
@@ -176,16 +188,23 @@ public class DataWriter
 			}
 			for (eu.opends.traffic.PedestrianData pedestrianData : PhysicalTraffic.getPedestrianDataList())
 			{
-				arrayTrafficCarDataFiles.add(new File(outputFolder + "/trafficData/pedestrian/" + pedestrianData.getName() + ".txt"));
+				arrayPedestrianDataFiles.add(new File(outputFolder + "/trafficData/pedestrian/" + pedestrianData.getName() + ".txt"));
 			}
 		}
 
 		
-		if (analyzerDataFile.getAbsolutePath() == null) 
+		if (analyzerDataFile.getAbsolutePath() == null)
 		{
 			System.err.println("Parameter not accepted at method initWriter.");
 			return;
 		}
+		
+		// MOD: Check for trigger data file
+		/*if (triggerDataFile.getAbsolutePath() == null)
+		{
+			System.err.println("Parameter not accepted at method initWriter.");
+			return;
+		}*/
 		
 		// MOD: Check the same for other traffic
 		for(File fTrafficCar : arrayTrafficCarDataFiles)
@@ -238,6 +257,36 @@ public class DataWriter
 		arrayDataList = new ArrayList<DataUnit>();
 		
 		lastAnalyzerDataSave = (new Date()).getTime();
+		
+		// MOD: Init trigger data file
+		/*outFileTrigger = new File(triggerDataFile.getAbsolutePath());
+		
+		i = 2;
+		while(outFileTrigger.exists())
+		{
+			if(trackNumber >= 0)
+				triggerDataFile = new File(outputFolder + "/triggerData_track" + trackNumber + "(" + i + ").txt");
+			else
+				triggerDataFile = new File(outputFolder + "/triggerData(" + i + ").txt");
+			
+			outFileTrigger = new File(triggerDataFile.getAbsolutePath());
+			i++;
+		}
+		
+		try {
+			out = new BufferedWriter(new FileWriter(outFileTrigger, true));
+			out.write("Driving Task: " + relativeDrivingTaskPath + newLine);
+			out.write("Date-Time: "
+					+ new SimpleDateFormat("yyyy_MM_dd-HH_mm_ss")
+							.format(new Date()) + newLine);
+			out.write("Driver: " + driverName + newLine);
+			out.write("Used Format = Time (ms): Triggers" + newLine);
+			// MOD: close out file first
+			out.flush();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		arrayTriggerDataList = new ArrayList<String[]>();*/
 		
 		// MOD: Init traffic data files
 		for(File file : arrayTrafficCarDataFiles)
@@ -320,7 +369,7 @@ public class DataWriter
 	 * Save the car data at a frequency of 20Hz. That class should be called in
 	 * the update-method <code>Simulator.java</code>.
 	 */
-	public void saveAnalyzerData() 
+	public void saveAnalyzerData()
 	{
 		int updateInterval = 50; // = 1000/20
 		
@@ -350,9 +399,30 @@ public class DataWriter
 							.getAcceleratorPedalIntensity(), car.getBrakePedalIntensity(), 
 							car.isEngineOn());
 			
+			// MOD: Save triggers
+			/*if(!triggerList.isEmpty())
+			{
+				String[] triggers = new String[2];
+				triggers[0] = curDate.getTime() + "";
+				// Construct trigger string
+				triggers[1] = "";
+				for(String trigger : triggerList)
+				{
+					triggers[1] += trigger + ",";
+				}
+				triggers[1] = triggers[1].substring(0, triggers[1].length() - 1);
+				// Check if triggers are new
+				if(arrayTriggerDataList.isEmpty() ||
+					!arrayTriggerDataList.get(arrayTriggerDataList.size() - 1)[1].equals(triggers[1]))
+				{
+					arrayTriggerDataList.add(triggers);
+				}
+			}*/
+			
+			// MOD: Save other traffic
 			DataUnit[] rowsTrafficCar = new DataUnit[arrayTrafficCarDataFiles.size()];
 			DataUnit[] rowsPedestrian = new DataUnit[arrayPedestrianDataFiles.size()];
-			
+									
 			int i = 0;
 			int j = 0;
 			for(TrafficObject trafficObj : PhysicalTraffic.getTrafficObjectList())
@@ -372,7 +442,6 @@ public class DataWriter
 					
 					i++;
 				}
-				
 				else if(trafficObj.getClass().equals(Pedestrian.class))
 				{
 					// Pedestrian
@@ -432,12 +501,14 @@ public class DataWriter
 	 * @param row
 	 * 			Datarow to write
 	 */
-	public void write(DataUnit rowCar, ArrayList<DataUnit> rowsTrafficCar, ArrayList<DataUnit> rowsPedestrian)
+	public void write(DataUnit rowCar, ArrayList<DataUnit> rowTrafficCars, ArrayList<DataUnit> rowPedestrians, String[] rowTrigger)
 	{
 		arrayDataList.add(rowCar);
 		
-		this.trafficCarDataList.add(rowsTrafficCar);
-		this.pedestrianDataList.add(rowsPedestrian);
+		//arrayTriggerDataList.add(rowTrigger);
+		
+		trafficCarDataList.add(rowTrafficCars);
+		pedestrianDataList.add(rowPedestrians);
 		
 		if (arrayDataList.size() > 50)
 			flush();
@@ -475,7 +546,6 @@ public class DataWriter
 				out = new BufferedWriter(new FileWriter(file, true));
 				
 				StringBuffer sb = new StringBuffer();
-				//for (DataUnit r : this.trafficCarDataList.get(arrayTrafficCarDataFiles.indexOf(file))) {
 				for (ArrayList<DataUnit> rList : this.trafficCarDataList) {
 					DataUnit r = rList.get(arrayTrafficCarDataFiles.indexOf(file));
 						sb.append(r.getDate().getTime() + ":" + r.getXpos() + ":"
@@ -487,7 +557,6 @@ public class DataWriter
 							);
 				}
 				out.write(sb.toString());
-				//this.trafficCarDataList.get(arrayTrafficCarDataFiles.indexOf(file)).clear();
 				out.flush();
 			} catch (IOException e) {
 				e.printStackTrace();
@@ -500,7 +569,6 @@ public class DataWriter
 				out = new BufferedWriter(new FileWriter(file, true));
 				
 				StringBuffer sb = new StringBuffer();
-				//for (DataUnit r : this.trafficCarDataList.get(arrayTrafficCarDataFiles.indexOf(file))) {
 				for (ArrayList<DataUnit> rList : this.pedestrianDataList) {
 					DataUnit r = rList.get(arrayPedestrianDataFiles.indexOf(file));
 						sb.append(r.getDate().getTime() + ":" + r.getXpos() + ":"
@@ -512,7 +580,6 @@ public class DataWriter
 							);
 				}
 				out.write(sb.toString());
-				//this.trafficCarDataList.get(arrayTrafficCarDataFiles.indexOf(file)).clear();
 				out.flush();
 			} catch (IOException e) {
 				e.printStackTrace();
@@ -523,6 +590,25 @@ public class DataWriter
 		trafficCarDataList.clear();
 		pedestrianDataList.clear();
 	}
+
+	/*public void flushTriggerData()
+	{
+		// MOD: Flush trigger data
+		try {
+			out = new BufferedWriter(new FileWriter(outFileTrigger, true));
+		
+			StringBuffer sb = new StringBuffer();
+			for (String[] r : arrayTriggerDataList) {
+				sb.append(r[0] + ":[" + r[1] + "]" + newLine);
+			}
+			out.write(sb.toString());
+			//arrayTriggerDataList.clear();
+			out.flush();
+		} catch (IOException e) {
+			e.printStackTrace();
+			System.exit(0);
+		}
+	}*/
 
 	
 	public void quit() 

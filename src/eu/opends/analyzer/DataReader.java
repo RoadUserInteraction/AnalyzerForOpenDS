@@ -52,6 +52,7 @@ public class DataReader
 	private LinkedList<DataUnit> carDataUnitList = new LinkedList<DataUnit>();
 	
 	// MOD: Other traffic:
+	private LinkedList<ArrayList<Vector3f>> trafficCarPositionLists = new LinkedList<ArrayList<Vector3f>>();
 	private LinkedList<LinkedList<DataUnit>> trafficCarDataUnitList = new LinkedList<LinkedList<DataUnit>>();
 	private LinkedList<LinkedList<DataUnit>> pedestrianDataUnitList = new LinkedList<LinkedList<DataUnit>>();
 	
@@ -170,6 +171,8 @@ public class DataReader
 	{
 		trafficCarDataUnitList.addLast(new LinkedList<DataUnit>());
 		
+		trafficCarPositionLists.addLast(new ArrayList<Vector3f>());
+		
 		try {
 			// get traffic data
 			String inputLine = inputReader.readLine();
@@ -177,10 +180,22 @@ public class DataReader
 			while (inputLine != null) 
 			{
 				Vector3f position = parseCarPosition(inputLine);
+				trafficCarPositionLists.getLast().add(position);
 				
 				Quaternion rotation = parseCarRotation(inputLine);
 				
 				Long timeStamp = parseTimeStamp(inputLine);
+				
+				Float speed = parseSpeed(inputLine);
+				
+				Float steeringWheelPosition = parseSteeringWheelPosition(inputLine);
+				
+				Float acceleratorPedalPosition = parseAcceleratorPedalPosition(inputLine);
+				
+				Float brakePedalPosition = parseBrakePedalPosition(inputLine);
+				
+				Boolean isEngineOn = parseIsEngineOn(inputLine);
+
 
 				DataUnit dataUnit = new DataUnit(new Date(timeStamp),
 						position.getX(),
@@ -190,8 +205,8 @@ public class DataReader
 						rotation.getY(),
 						rotation.getZ(),
 						rotation.getW(),
-						0, 0, 0, 0,
-						true);
+						speed, steeringWheelPosition, acceleratorPedalPosition, brakePedalPosition,
+						isEngineOn);
 				trafficCarDataUnitList.getLast().add(dataUnit);
 				
 				inputLine = inputReader.readLine();
@@ -220,6 +235,8 @@ public class DataReader
 				Quaternion rotation = parseCarRotation(inputLine);
 				
 				Long timeStamp = parseTimeStamp(inputLine);
+				
+				Float speed = parseSpeed(inputLine);
 
 				DataUnit dataUnit = new DataUnit(new Date(timeStamp),
 						position.getX(),
@@ -229,7 +246,7 @@ public class DataReader
 						rotation.getY(),
 						rotation.getZ(),
 						rotation.getW(),
-						0, 0, 0, 0,
+						speed, 0, 0, 0,
 						true);
 				pedestrianDataUnitList.getLast().add(dataUnit);
 				inputLine = inputReader.readLine();
@@ -393,5 +410,10 @@ public class DataReader
 	{
 		String[] splittedLineArray = inputLine.split(":");
 		return Boolean.parseBoolean(splittedLineArray[12]);
+	}
+
+	// MOD
+	public LinkedList<ArrayList<Vector3f>> getTrafficCarPositionLists() {
+		return trafficCarPositionLists;
 	}
 }

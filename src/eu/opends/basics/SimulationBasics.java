@@ -44,7 +44,7 @@ import com.jme3.util.SkyFactory.EnvMapType;
 
 import eu.opends.camera.CameraFactory;
 import eu.opends.cameraFlight.CameraFlight;
-import eu.opends.car.Car;
+import eu.opends.car.SteeringCar;
 import eu.opends.drivingTask.DrivingTask;
 import eu.opends.drivingTask.interaction.InteractionLoader;
 import eu.opends.drivingTask.scenario.ScenarioLoader;
@@ -452,5 +452,5 @@ public abstract class SimulationBasics extends SimpleApplication
 
     
     // MOD
-    public abstract Car getCar();
+    public abstract SteeringCar getCar();
 }

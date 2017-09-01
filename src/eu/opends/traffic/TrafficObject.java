@@ -44,5 +44,6 @@ public interface TrafficObject
 	public Quaternion getRotation();
 	
 	// MOD:
-    public void setReplayRunning(boolean replayRunning);
+	public void setReplayRunning(boolean replayRunning);
+	public void setWalkingSpeedKmh(float walkingSpeedKmh);
 }

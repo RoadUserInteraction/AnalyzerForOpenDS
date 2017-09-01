@@ -44,6 +44,7 @@ import eu.opends.drivingTask.settings.SettingsLoader;
 import eu.opends.drivingTask.settings.SettingsLoader.Setting;
 import eu.opends.input.AxisAnalogListener;
 import eu.opends.input.KeyActionListener;
+import eu.opends.main.DriveAnalyzer;
 import eu.opends.main.Simulator;
 import eu.opends.trigger.TriggerAction;
 
@@ -69,7 +70,7 @@ public class InteractionLoader
 		this.triggerList = new ArrayList<TriggerDescription>();
 		readActivities();
 		readTriggers();
-		if(sim instanceof Simulator)
+		//if(sim instanceof Simulator)
 			evaluateTriggers();
 	}
 
@@ -164,7 +165,6 @@ public class InteractionLoader
 						parameterList.setProperty(parameterName, parameterValue);
 					}
 				}
-				
 				actionList.add(new ActionDescription(actionName, delay, repeat, parameterList));
 			}
 		}
@@ -456,9 +456,17 @@ public class InteractionLoader
 			List<ActionDescription> actionDescriptionList = activityMap.get(activityRef);
 			for(ActionDescription actionDescription : actionDescriptionList)
 			{
-				TriggerAction triggerAction = createTriggerAction(actionDescription);
-				if(triggerAction != null)
-					triggerActionList.add(triggerAction);
+				// MOD: Analyzer: Only add action if it is not moveTraffic, since the positions will be "forced" from data
+				if(sim instanceof Simulator || ((sim instanceof DriveAnalyzer) 
+						&& !actionDescription.getName().equals("moveTraffic")
+						&& !actionDescription.getName().equals("startRecording")
+						&& !actionDescription.getName().equals("stopRecording")
+						&& !actionDescription.getName().equals("shutDownSimulation")))
+				{
+					TriggerAction triggerAction = createTriggerAction(actionDescription);
+					if(triggerAction != null)
+						triggerActionList.add(triggerAction);
+				}
 			}
 		}
 		return triggerActionList;
