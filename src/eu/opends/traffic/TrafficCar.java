@@ -38,7 +38,6 @@ import eu.opends.basics.SimulationBasics;
 import eu.opends.car.Car;
 import eu.opends.car.LightTexturesContainer.TurnSignalState;
 import eu.opends.environment.TrafficLightCenter;
-import eu.opends.main.Simulator;
 import eu.opends.tools.Util;
 
 /**
@@ -57,7 +56,7 @@ public class TrafficCar extends Car implements TrafficObject
 	private boolean loseCargo = false;
 	
 	// MOD
-    public boolean replayRunning = false;
+	public boolean replayRunning = false;
 
 	
 	public TrafficCar(SimulationBasics sim, TrafficCarData trafficCarData)
@@ -509,9 +508,14 @@ public class TrafficCar extends Car implements TrafficObject
 	
 	
 	// MOD
-    public void setReplayRunning(boolean replayRunning)
+	public void setReplayRunning(boolean replayRunning)
     {
     	this.replayRunning = replayRunning;
+    }
+	
+	public void setWalkingSpeedKmh(float walkingSpeed)
+    {
+		
     }
 
 }

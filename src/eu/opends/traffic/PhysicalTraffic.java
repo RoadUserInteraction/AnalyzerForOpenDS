@@ -21,8 +21,6 @@ package eu.opends.traffic;
 import java.util.ArrayList;
 
 import eu.opends.basics.SimulationBasics;
-import eu.opends.main.DriveAnalyzer;
-import eu.opends.main.Simulator;
 
 /**
  * 

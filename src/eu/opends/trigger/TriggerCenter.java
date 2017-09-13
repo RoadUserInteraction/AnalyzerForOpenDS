@@ -52,6 +52,9 @@ public class TriggerCenter
 
 	private LinkedList<Spatial> roadObjectsTriggerList;
 	public static ArrayList<String> triggerReportList = new ArrayList<String>(5);
+	
+	// MOD
+	private ArrayList<Spatial> triggerReplayList = new ArrayList<Spatial>();
 
 	
 	public static void addToTrafficLightTriggerList(String trafficLightName, Spatial trafficLightTriggerObject)
@@ -76,7 +79,7 @@ public class TriggerCenter
 	}
 
 	
-	public void setup() 
+	public void setup()
 	{
 		Spatial tempSpatial;
 
@@ -84,6 +87,7 @@ public class TriggerCenter
 
 		//-----------------------
 		List<Spatial> tempList = sim.getTriggerNode().getChildren();
+
 		//List<Spatial> tempList = Util.getAllSpatials(sim.getTriggerNode());
 		//-----------------------
 		
@@ -178,7 +182,7 @@ public class TriggerCenter
 	private void handleRoadObjectsCollision(LinkedList<Spatial> triggerList)
 	{
 		Car car = sim.getCar();
-
+		
 		for (Spatial trigger : triggerList) 
 		{	
 			// TODO: caution! trigger center may be farther away than 1000 meters when hitting
@@ -193,8 +197,36 @@ public class TriggerCenter
 				// if car intersects with a trigger --> report trigger to HMI Center
 				if(car.getCarNode().getWorldBound().intersects(triggerObject.getWorldBound()))
 				{
-					if(SimulationBasics.getTriggerActionListMap().containsKey(triggerName))
-						TriggerCenter.performTriggerAction(triggerName);
+					// MOD: In Analyzer mode, perform all triggers which occured before the trigger first (replay backward issue)
+					if(sim instanceof Simulator)
+					{
+						if(SimulationBasics.getTriggerActionListMap().containsKey(triggerName))
+							TriggerCenter.performTriggerAction(triggerName);
+					}
+					else
+					{
+						// Check if replay is backwards or not
+						if(triggerReplayList.size() > 0 && triggerList.get(triggerReplayList.size() - 1).equals(trigger))
+						{
+							// Is playing backwards, perform all triggers which happened before trigger
+							for (Spatial triggerPrev : triggerReplayList)
+							{
+								if(triggerReplayList.indexOf(triggerPrev) < triggerReplayList.indexOf(trigger)
+										&& SimulationBasics.getTriggerActionListMap().containsKey(triggerPrev.getName()))
+									TriggerCenter.performTriggerAction(triggerPrev.getName());
+							}
+							//triggerReplayList.remove(triggerReplayList.size() - 1);
+						}
+						else
+						{
+							// Not playing backwards, just perform current trigger
+							if(SimulationBasics.getTriggerActionListMap().containsKey(triggerName))
+							{
+								TriggerCenter.performTriggerAction(triggerName);
+								triggerReplayList.add(trigger);
+							}
+						}
+					}
 				}
 			}
 		}
@@ -396,7 +428,10 @@ public class TriggerCenter
 	public static void removeTriggerReport(String objectID)
 	{
 		if(!triggerReportList.remove(objectID))
+		{
 			System.err.println("Could not remove '" + objectID + "' from trigger report list!");
+			System.err.println("Trigger report list: " + triggerReportList.toString());
+		}
 	}
 
 }

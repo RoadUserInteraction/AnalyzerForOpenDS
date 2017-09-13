@@ -508,7 +508,7 @@ public class Simulator extends SimulationBasics
     {
     	if(initializationFinished)
     	{
-			super.simpleUpdate(tpf);
+			super.simpleUpdate(tpf);		
 			
 			// updates camera
 			cameraFactory.updateCamera();
@@ -673,6 +673,9 @@ public class Simulator extends SimulationBasics
 			
 			physicalTraffic.close();
 			
+			// MOD: flush trigger data file
+			//dataWriter.flushTriggerData();
+			
 			if(settingsControllerServer != null)
 				settingsControllerServer.close();
 			
@@ -736,7 +739,7 @@ public class Simulator extends SimulationBasics
     		
 	    	StartPropertiesReader startPropertiesReader = new StartPropertiesReader();
 
-			sim.setSettings(startPropertiesReader.getSettings(sim));
+			sim.setSettings(startPropertiesReader.getSettings());
 
 			// show/hide settings screen
 			sim.setShowSettings(startPropertiesReader.showSettingsScreen());

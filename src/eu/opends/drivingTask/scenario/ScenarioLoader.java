@@ -1288,7 +1288,7 @@ public class ScenarioLoader
 					TrafficLightPositionData positionData = new TrafficLightPositionData(roadID, crossingType, arrowType, lane);
 					
 					// create new traffic light
-					TrafficLight trafficLight = new TrafficLight((Simulator) sim, trafficLightID, trafficLightTriggerID, 
+					TrafficLight trafficLight = new TrafficLight(sim, trafficLightID, trafficLightTriggerID, 
 							trafficLightPhaseTriggerID, intersectionID, initialState, direction, 
 							phasePosition, requiresRedList, positionData);
 					

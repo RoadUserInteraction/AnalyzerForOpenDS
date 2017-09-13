@@ -26,7 +26,6 @@ import eu.opends.basics.SimulationBasics;
 import eu.opends.environment.TrafficLight.*;
 import eu.opends.environment.TrafficLightCenter.*;
 import eu.opends.environment.TrafficLightException.*;
-import eu.opends.main.Simulator;
 
 
 /**

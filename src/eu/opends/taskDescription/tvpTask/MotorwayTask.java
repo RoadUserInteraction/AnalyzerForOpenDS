@@ -107,7 +107,9 @@ public class MotorwayTask
 		TrafficCar closestLeadingCar = null;
 		TrafficCar closestFollowerCar = null;
 		
-		SteeringCar car = ((Simulator)sim).getCar();
+		//SteeringCar car = ((Simulator)sim).getCar();
+		// MOD:
+		SteeringCar car = sim.getCar();
 		float carX = car.getPosition().getX();
 		float carZ = car.getPosition().getZ();
 		

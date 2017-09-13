@@ -56,7 +56,8 @@ public class InternalMapProcessing
 		System.out.println("MapModelList:  [" + listToString(sceneNode) + "]");
 
 		// apply triggers to certain visible objects
-		if (sim instanceof Simulator) 
+		// MOD: Valid for both Simulator and Analyzer
+		//if (sim instanceof Simulator) 
 		{		
 			//generateTrafficLightTriggers();
 			generateDrivingTaskTriggers();

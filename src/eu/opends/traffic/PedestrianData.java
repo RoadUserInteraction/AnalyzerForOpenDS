@@ -53,7 +53,6 @@ public class PedestrianData
 		this.localRotation = localRotation;
 		this.modelPath = modelPath;
 		this.followBoxSettings = followBoxSettings;
-		System.out.println(this.followBoxSettings.getWayPoints().toString());
 	}
 
 

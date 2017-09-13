@@ -121,7 +121,7 @@ public abstract class Car
 		// load light textures
 		lightTexturesContainer = new LightTexturesContainer(sim, this, lightTexturesPath);
 		//lightTexturesContainer.printAllContent();
-		
+				
         // add car node to rendering node
         sim.getSceneNode().attachChild(carNode);
         
