@@ -263,7 +263,7 @@ public class DriveAnalyzer extends SimulationBasics
 		createText();
 		
         // setup camera settings
-		cameraFactory = new AnalyzerCam(this, target);
+		cameraFactory = new AnalyzerCam(this, target, car);
 		//target.attachChild(cameraFactory.getMainCameraNode()); // TODO
 		
 		// MOD: Init trigger center
@@ -943,16 +943,31 @@ public class DriveAnalyzer extends SimulationBasics
     	PlatformImpl.startup(() -> {});
     	
     	
-    	AppSettings settings = new AppSettings(false);
+    	// CN: Modifications of Analyzer to shortcut the settings window
+    	StartPropertiesReader startPropertiesReader = new StartPropertiesReader();
+    	analyzer.setSettings(startPropertiesReader.getSettings());
 
-        settings.setUseJoysticks(true);
-        settings.setSettingsDialogImage("OpenDS.png");
-        settings.setTitle("OpenDS Analyzer");
-        settings.setWidth(1366);
-        settings.setWidth(768);
+		// show/hide settings screen
+    	analyzer.setShowSettings(startPropertiesReader.showSettingsScreen());
+    	
+    	if (!analyzer.analyzerFileGiven){ //if no file path is given as an argument, then check the startProperties file
+	    	if(startPropertiesReader.getDrivingTaskPath()!=null && !startPropertiesReader.getDrivingTaskPath().isEmpty()){
+	    		analyzer.analyzerFilePath = startPropertiesReader.getDrivingTaskPath();
+				analyzer.analyzerFileGiven = true;
+				
+				if(!analyzer.isValidAnalyzerFile(new File(startPropertiesReader.getDrivingTaskPath())))
+					return;
+	    	}
+    	}
+//    	AppSettings settings = new AppSettings(false);
+//
+//        settings.setUseJoysticks(true);
+//        settings.setSettingsDialogImage("OpenDS.png");
+//        settings.setTitle("OpenDS Analyzer");
+//        settings.setWidth(768);
+//        
+//		analyzer.setSettings(settings);		
 
-		analyzer.setSettings(settings);
-		
 		analyzer.setPauseOnLostFocus(false);
 		analyzer.start();
 	}
