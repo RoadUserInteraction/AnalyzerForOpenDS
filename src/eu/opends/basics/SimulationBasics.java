@@ -59,6 +59,7 @@ import eu.opends.niftyGui.InstructionScreenGUI;
 import eu.opends.niftyGui.KeyMappingGUI;
 import eu.opends.niftyGui.ShutDownGUI;
 import eu.opends.oculusRift.StereoCamAppState;
+import eu.opends.taskDescription.contreTask.SteeringTask;
 import eu.opends.tools.PropertiesLoader;
 import eu.opends.tools.XMLLoader;
 import eu.opends.trigger.TriggerAction;
@@ -453,4 +454,11 @@ public abstract class SimulationBasics extends SimpleApplication
     
     // MOD
     public abstract SteeringCar getCar();
+
+
+    // MOD
+    protected SteeringTask steeringTask;
+	public SteeringTask getSteeringTask() {
+		return steeringTask;
+	}
 }

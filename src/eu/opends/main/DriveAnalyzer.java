@@ -264,7 +264,7 @@ public class DriveAnalyzer extends SimulationBasics
 		
         // setup camera settings
 		cameraFactory = new AnalyzerCam(this, target, car);
-		//target.attachChild(cameraFactory.getMainCameraNode()); // TODO
+		target.attachChild(cameraFactory.getMainCameraNode()); // TODO
 		
 		// MOD: Init trigger center
 		triggerCenter.setup();
@@ -904,8 +904,8 @@ public class DriveAnalyzer extends SimulationBasics
     }
 	
 	
-	public static void main(String[] args) 
-	{   	
+	public static void main(String[] args)
+	{
 		Logger.getLogger("").setLevel(Level.SEVERE);
 		DriveAnalyzer analyzer = new DriveAnalyzer();
 

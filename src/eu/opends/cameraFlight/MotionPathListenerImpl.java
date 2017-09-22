@@ -22,6 +22,7 @@ import com.jme3.cinematic.MotionPathListener;
 import com.jme3.cinematic.events.MotionEvent;
 import com.jme3.math.Vector3f;
 
+import eu.opends.basics.SimulationBasics;
 import eu.opends.main.Simulator;
 
 /**
@@ -30,10 +31,11 @@ import eu.opends.main.Simulator;
  */
 public class MotionPathListenerImpl implements MotionPathListener 
 {
-	private Simulator sim;
+	// MOD: Changed from Simulator to SimulationBasics
+	private SimulationBasics sim;
 	
 
-	public MotionPathListenerImpl(Simulator sim) 
+	public MotionPathListenerImpl(SimulationBasics sim) 
 	{
 		this.sim = sim;
 	}

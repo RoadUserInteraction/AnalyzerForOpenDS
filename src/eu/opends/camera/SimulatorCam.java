@@ -164,7 +164,7 @@ public class SimulatorCam extends CameraFactory
 	
 	
 	public void updateCamera()
-	{
+	{	
 		if(camMode == CameraMode.EGO)
 		{
 			if(mirrorMode == MirrorMode.ALL)

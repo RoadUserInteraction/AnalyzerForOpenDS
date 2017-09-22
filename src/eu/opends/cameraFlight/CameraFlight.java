@@ -37,6 +37,7 @@ import com.jme3.renderer.ViewPort;
 import com.jme3.scene.CameraNode;
 import com.jme3.scene.Node;
 
+import eu.opends.basics.SimulationBasics;
 //import eu.opends.camera.CameraFactory.CameraMode;
 import eu.opends.main.Simulator;
 
@@ -47,7 +48,7 @@ import eu.opends.main.Simulator;
  */
 public class CameraFlight
 {
-	private Simulator sim;
+	private SimulationBasics sim;
     private Cinematic cinematic;
     private FadeFilter fade;
 	private Camera cam;
@@ -60,7 +61,7 @@ public class CameraFlight
 	private CameraFlightSettings settings;
 	
 	
-    public CameraFlight(Simulator sim) throws NotEnoughWaypointsException
+    public CameraFlight(SimulationBasics sim) throws NotEnoughWaypointsException
     {
     	settings = Simulator.getDrivingTask().getScenarioLoader().getCameraFlightSettings();
     	
@@ -181,7 +182,7 @@ public class CameraFlight
 	}
 	
 	
-	public void setTerminated(boolean terminated) 
+	public void setTerminated(boolean terminated)
 	{
 		isTerminated = terminated;		
 	}
