@@ -489,7 +489,7 @@ public class ScenarioLoader
 	}
 	
 	
-	public boolean isShadowFilter() 
+	public boolean isShadowFilter()
 	{
 		Boolean useShadowFilter = dtData.getValue(Layer.SCENARIO, 
 				"/scenario:scenario/scenario:environment/scenario:useShadowFilter", Boolean.class);
@@ -521,7 +521,7 @@ public class ScenarioLoader
 	 * @return
 	 * 			Initial rotation of the car at the beginning of the simulation
 	 */
-	public Quaternion getStartRotation() 
+	public Quaternion getStartRotation()
 	{
 		return driverCarStartRotation;
 	}
@@ -946,6 +946,7 @@ public class ScenarioLoader
 		
 		try {
 			NodeList wayPointNodeList = wayPointsNode.getChildNodes();
+
 			for (int k = 1; k <= wayPointNodeList.getLength(); k++) 
 			{
 				Node currentWayPointNode = wayPointNodeList.item(k-1);

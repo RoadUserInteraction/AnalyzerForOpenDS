@@ -739,7 +739,7 @@ public class Simulator extends SimulationBasics
     		
 	    	StartPropertiesReader startPropertiesReader = new StartPropertiesReader();
 
-			sim.setSettings(startPropertiesReader.getSettings());
+			sim.setSettings(startPropertiesReader.getSettings(sim));
 
 			// show/hide settings screen
 			sim.setShowSettings(startPropertiesReader.showSettingsScreen());

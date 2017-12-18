@@ -117,12 +117,6 @@ public class Pedestrian implements AnimationListener, TrafficObject
 		
 		followBox = new FollowBox(sim, this, pedestrianData.getFollowBoxSettings());
 		
-		// MOD: In Anlyzer, 
-		if(sim instanceof DriveAnalyzer)
-		{
-			
-		}
-		
 		initialized = true;
     }
     

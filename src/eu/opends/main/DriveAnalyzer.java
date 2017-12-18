@@ -18,6 +18,10 @@
 
 package eu.opends.main;
 
+import java.awt.Color;
+import java.awt.Graphics2D;
+import java.awt.RenderingHints;
+import java.awt.image.BufferedImage;
 import java.io.File;
 import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
@@ -40,7 +44,10 @@ import com.jme3.scene.Mesh.Mode;
 import com.jme3.scene.Spatial.CullHint;
 import com.jme3.scene.shape.Curve;
 import com.jme3.scene.shape.Cylinder;
+import com.jme3.scene.shape.Quad;
 import com.jme3.system.AppSettings;
+import com.jme3.texture.Texture2D;
+import com.jme3.texture.plugins.AWTLoader;
 import com.sun.javafx.application.PlatformImpl;
 
 import de.lessvoid.nifty.Nifty;
@@ -52,6 +59,7 @@ import eu.opends.analyzer.IdealLine.IdealLineStatus;
 import eu.opends.basics.InternalMapProcessing;
 import eu.opends.basics.SimulationBasics;
 import eu.opends.camera.AnalyzerCam;
+import eu.opends.camera.AnalyzerCam_Original;
 import eu.opends.car.SteeringCar;
 import eu.opends.drivingTask.DrivingTask;
 import eu.opends.environment.TrafficLightCenter;
@@ -61,16 +69,14 @@ import eu.opends.niftyGui.AnalyzerFileSelectionGUIController;
 import eu.opends.profiler.BasicProfilerState;
 import eu.opends.taskDescription.tvpTask.MotorwayTask;
 import eu.opends.tools.PanelCenter;
-import eu.opends.traffic.Pedestrian;
 import eu.opends.traffic.PhysicalTraffic;
-import eu.opends.traffic.TrafficObject;
 import eu.opends.trigger.TriggerCenter;
 
 /**
  * 
  * @author Saied Tehrani, Rafael Math
  */
-public class DriveAnalyzer extends SimulationBasics 
+public class DriveAnalyzer extends SimulationBasics
 {	
 	private boolean showRelativeTime = true;
 	private boolean pointsEnabled = false;
@@ -498,6 +504,22 @@ public class DriveAnalyzer extends SimulationBasics
 		Geometry geoLine = new Geometry("drivenLine", line);
 	    geoLine.setMaterial(drivenMaterial);
 	    lineNode.attachChild(geoLine);
+	    
+	    
+	    // MOD: Visualize line for trafficCars
+	    for(ArrayList<Vector3f> trafficCarPositionList : trafficCarPositionLists)
+	    {
+			Material drivenMaterial2 = new Material(assetManager,"Common/MatDefs/Misc/Unshaded.j3md");
+	    	drivenMaterial2.setColor("Color", ColorRGBA.Red);
+	    	Curve line2 = new Curve(trafficCarPositionList.toArray(new Vector3f[0]), 1);
+	    	line2.setMode(Mode.Lines);
+	    	line2.setLineWidth(2f);
+	    	geoLine = new Geometry("drivenLine", line2);
+	    	geoLine.setMaterial(drivenMaterial2);
+	    	
+	    	lineNode.attachChild(geoLine);
+	    }
+
 	
 	    // visualize cones
 	    Material coneMaterial = new Material(assetManager,"Common/MatDefs/Misc/Unshaded.j3md");
@@ -751,6 +773,79 @@ public class DriveAnalyzer extends SimulationBasics
 		
 		
 		PanelCenter.getMessageBox().addMessage(total, 0);
+		
+		// MOD:
+		if(1 > 2 && this.trafficCarDataUnitList.size() > 0)
+		{			
+		BufferedImage image = new BufferedImage(500, 150, BufferedImage.TYPE_INT_ARGB);
+		Graphics2D g2d = image.createGraphics();
+	    g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+		g2d.setColor(Color.BLACK);
+		g2d.fillRect(0, 0, image.getWidth(), image.getHeight());
+		
+		/*g2d.fillOval(100 - (int)(150 * this.currentCarDataUnit.getAcceleratorPedalPos()), 100 - (int)(150 * this.currentCarDataUnit.getAcceleratorPedalPos()), (int)(300 * this.currentCarDataUnit.getAcceleratorPedalPos()), (int)(300 * this.currentCarDataUnit.getAcceleratorPedalPos()));
+		g2d.setColor(Color.RED);
+		g2d.fillOval(100 - (int)(150 * this.currentCarDataUnit.getBrakePedalPos()), 100 - (int)(150 * this.currentCarDataUnit.getBrakePedalPos()), (int)(300 * this.currentCarDataUnit.getBrakePedalPos()), (int)(300 * this.currentCarDataUnit.getBrakePedalPos()));
+		*/
+		
+		// Acceleration plot
+		float stepSize = image.getWidth() / (float)carDataUnitList.size();
+		g2d.setColor(Color.RED);
+		//g2d.drawString(PhysicalTraffic.getTrafficObjectList().get(0).getName(), 30, 120);
+		for(int i = 0; i < carDataUnitList.size() - 1; i++)
+		{
+			g2d.drawLine((int)((float)i * stepSize), (int)(trafficCarDataUnitList.get(0).get(i).getAcceleratorPedalPos() * 300), (int)((float)(i + 1) * stepSize), (int)(trafficCarDataUnitList.get(0).get(i + 1).getAcceleratorPedalPos() * 300));
+		}	
+		g2d.setColor(Color.YELLOW);
+		//g2d.drawString(car.getCarNode().getName(), 30, 120);
+		for(int i = 0; i < carDataUnitList.size() - 1; i++)
+		{
+			g2d.drawLine((int)((float)i * stepSize), (int)(carDataUnitList.get(i).getAcceleratorPedalPos() * 300), (int)((float)(i + 1) * stepSize), (int)(carDataUnitList.get(i + 1).getAcceleratorPedalPos() * 300));
+		}
+		
+		g2d.setColor(Color.WHITE);
+		g2d.drawLine((int)((float)targetIndex * stepSize), 0, (int)((float)targetIndex * stepSize), image.getHeight());
+		
+		Geometry test = new Geometry("myPic", new Quad(image.getWidth(), image.getHeight()));
+		Material mat = new Material(assetManager, "Common/MatDefs/Misc/Unshaded.j3md");
+		//mat.getAdditionalRenderState().setBlendMode(com.jme3.material.RenderState.BlendMode.Alpha);
+		mat.setTexture("ColorMap", new Texture2D(new AWTLoader().load(image, false)));
+		test.setMaterial(mat);
+		test.setLocalTranslation(50, 800, 0);
+		guiNode.attachChild(test);
+		
+		// Brake plot
+		BufferedImage image2 = new BufferedImage(500, 150, BufferedImage.TYPE_INT_ARGB);
+		Graphics2D g2d2 = image2.createGraphics();
+		g2d2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+		g2d2.setColor(Color.BLACK);
+		g2d2.fillRect(0, 0, image2.getWidth(), image2.getHeight());
+				
+		stepSize = image2.getWidth() / (float)carDataUnitList.size();
+		g2d2.setColor(Color.RED);
+		//g2d2.drawString(PhysicalTraffic.getTrafficObjectList().get(0).getName(), 30, 120);
+		for(int i = 0; i < carDataUnitList.size() - 1; i++)
+		{
+			g2d2.drawLine((int)((float)i * stepSize), (int)(trafficCarDataUnitList.get(0).get(i).getBrakePedalPos() * 300), (int)((float)(i + 1) * stepSize), (int)(trafficCarDataUnitList.get(0).get(i + 1).getBrakePedalPos() * 300));
+		}	
+		g2d2.setColor(Color.YELLOW);
+		//g2d2.drawString(car.getCarNode().getName(), 30, 120);
+		for(int i = 0; i < carDataUnitList.size() - 1; i++)
+		{
+			g2d2.drawLine((int)((float)i * stepSize), (int)(carDataUnitList.get(i).getBrakePedalPos() * 300), (int)((float)(i + 1) * stepSize), (int)(carDataUnitList.get(i + 1).getBrakePedalPos() * 300));
+		}
+		
+		g2d2.setColor(Color.WHITE);
+		g2d2.drawLine((int)((float)targetIndex * stepSize), 0, (int)((float)targetIndex * stepSize), image2.getHeight());
+		
+		Geometry test2 = new Geometry("myPic2", new Quad(image2.getWidth(), image2.getHeight()));
+		Material mat2 = new Material(assetManager, "Common/MatDefs/Misc/Unshaded.j3md");
+		//mat.getAdditionalRenderState().setBlendMode(com.jme3.material.RenderState.BlendMode.Alpha);
+		mat2.setTexture("ColorMap", new Texture2D(new AWTLoader().load(image2, false)));
+		test2.setMaterial(mat2);
+		test2.setLocalTranslation(50, 600, 0);
+		guiNode.attachChild(test2);
+		}
 	}
 
 
@@ -783,11 +878,8 @@ public class DriveAnalyzer extends SimulationBasics
 			// MOD: Update trigger center
 			triggerCenter.doTriggerChecks();
 						
-			// MOD: Update traffic
-			for(TrafficObject trafficObject : PhysicalTraffic.getTrafficObjectList())
-				if(trafficObject.getClass().equals(Pedestrian.class))
-					trafficObject.update(tpf,  PhysicalTraffic.getTrafficObjectList());	
-
+			// MOD: Update traffic (only pedestrians)
+			physicalTraffic.update(tpf);
 			
 			// MOD: replayPlaying update
 			for(int i = 0; i < pedestrianNames.size(); i++)
@@ -943,31 +1035,16 @@ public class DriveAnalyzer extends SimulationBasics
     	PlatformImpl.startup(() -> {});
     	
     	
-    	// CN: Modifications of Analyzer to shortcut the settings window
-    	StartPropertiesReader startPropertiesReader = new StartPropertiesReader();
-    	analyzer.setSettings(startPropertiesReader.getSettings());
+    	AppSettings settings = new AppSettings(false);
 
-		// show/hide settings screen
-    	analyzer.setShowSettings(startPropertiesReader.showSettingsScreen());
-    	
-    	if (!analyzer.analyzerFileGiven){ //if no file path is given as an argument, then check the startProperties file
-	    	if(startPropertiesReader.getDrivingTaskPath()!=null && !startPropertiesReader.getDrivingTaskPath().isEmpty()){
-	    		analyzer.analyzerFilePath = startPropertiesReader.getDrivingTaskPath();
-				analyzer.analyzerFileGiven = true;
-				
-				if(!analyzer.isValidAnalyzerFile(new File(startPropertiesReader.getDrivingTaskPath())))
-					return;
-	    	}
-    	}
-//    	AppSettings settings = new AppSettings(false);
-//
-//        settings.setUseJoysticks(true);
-//        settings.setSettingsDialogImage("OpenDS.png");
-//        settings.setTitle("OpenDS Analyzer");
-//        settings.setWidth(768);
-//        
-//		analyzer.setSettings(settings);		
+        settings.setUseJoysticks(true);
+        settings.setSettingsDialogImage("OpenDS.png");
+        settings.setTitle("OpenDS Analyzer");
+        settings.setWidth(1366);
+        settings.setWidth(768);
 
+		analyzer.setSettings(settings);
+		
 		analyzer.setPauseOnLostFocus(false);
 		analyzer.start();
 	}

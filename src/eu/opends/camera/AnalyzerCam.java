@@ -46,7 +46,8 @@ public class AnalyzerCam extends CameraFactory
 	{
 		this.car = car;
 		carNode = car.getCarNode();
-		initCamera(analyzer, targetNode);
+		//MOD: initCamera(analyzer, targetNode);
+		initCamera(analyzer, carNode);
 		setCamMode(CameraMode.CHASE);
 	}
 	

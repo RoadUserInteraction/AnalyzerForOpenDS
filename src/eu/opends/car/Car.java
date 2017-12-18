@@ -20,6 +20,7 @@ package eu.opends.car;
 
 import java.io.File;
 
+import com.jme3.bullet.collision.PhysicsCollisionObject;
 import com.jme3.bullet.collision.shapes.CollisionShape;
 import com.jme3.bullet.control.VehicleControl;
 import com.jme3.bullet.joints.HingeJoint;
@@ -41,10 +42,12 @@ import eu.opends.audio.AudioCenter;
 import eu.opends.basics.SimulationBasics;
 import eu.opends.car.LightTexturesContainer.TurnSignalState;
 import eu.opends.environment.GeoPosition;
+import eu.opends.main.DriveAnalyzer;
 import eu.opends.main.Simulator;
 import eu.opends.tools.PanelCenter;
 import eu.opends.tools.SpeedControlCenter;
 import eu.opends.tools.Vector3d;
+import eu.opends.traffic.TrafficCar;
 
 /**
  * 
@@ -121,7 +124,25 @@ public abstract class Car
 		// load light textures
 		lightTexturesContainer = new LightTexturesContainer(sim, this, lightTexturesPath);
 		//lightTexturesContainer.printAllContent();
-				
+		
+		// MOD for Analyzer
+		if(sim instanceof DriveAnalyzer)
+		{
+			// For traffic car, change color of car
+			if(super.getClass().equals(TrafficCar.class))
+			{
+				Material trafficCarMaterial = new Material(sim.getAssetManager(), "Common/MatDefs/Misc/Unshaded.j3md");
+				trafficCarMaterial.getAdditionalRenderState().setBlendMode(com.jme3.material.RenderState.BlendMode.Alpha);
+				trafficCarMaterial.setColor("Color", new ColorRGBA(1.0f, 0.0f, 0.0f, 0.5f));
+				this.carNode.setMaterial(trafficCarMaterial);
+			}
+			// Deactivate collisions for traffic and steering car
+			if(super.getClass().equals(TrafficCar.class) || super.getClass().equals(SteeringCar.class))
+			{
+				carControl.setCollisionGroup(PhysicsCollisionObject.COLLISION_GROUP_NONE);
+			}
+		}
+		
         // add car node to rendering node
         sim.getSceneNode().attachChild(carNode);
         

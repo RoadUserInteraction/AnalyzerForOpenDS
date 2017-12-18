@@ -81,7 +81,7 @@ public class SceneLoader
 	private List<MapObject> mapObjectsList = new ArrayList<MapObject>();
 	
 	
-	public SceneLoader(DrivingTaskDataQuery dtData, SimulationBasics sim) 
+	public SceneLoader(DrivingTaskDataQuery dtData, SimulationBasics sim)
 	{
 		this.dtData = dtData;
 		this.sim = sim;

@@ -35,7 +35,7 @@ public class StartPropertiesReader
 	private String driverName = "";
 	
 	
-	public AppSettings getSettings() 
+	public AppSettings getSettings(Simulator sim) 
 	{	
 		try {
 			FileInputStream inputStream = new FileInputStream("startProperties.properties");

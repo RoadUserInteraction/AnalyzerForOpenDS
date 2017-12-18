@@ -123,7 +123,11 @@ public class PhysicalTraffic extends Thread
 	public void update(float tpf)
 	{
 		for(TrafficObject trafficObject : trafficObjectList)
-			trafficObject.update(tpf, trafficObjectList);	
+		{
+			// MOD: Only update pedestrian
+			if(trafficObject.getClass().equals(Pedestrian.class))
+				trafficObject.update(tpf, trafficObjectList);
+		}
 	}
 
 
